@@ -1,73 +1,76 @@
-# React + TypeScript + Vite
+# PlanIt
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A browser-based floor plan editor built with React, TypeScript, and Vite. Draw walls, place windows and doors, mark areas, measure distances, and explore the result in a 3D walkthrough — all stored locally in the browser with no backend required.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Draw mode** — the single working mode for all editing tasks
+  - **Fixed walls** — structural walls (thick, dark); always rendered on top of movable walls
+  - **Movable walls** — lighter, non-structural partitions
+  - **Canal / Duct** — hollow thick-wall rectangles for service runs
+  - **Windows** — dashed thin lines
+  - **Doors** — line + opening arc with three interactive handles when highlighted: drag the arc end to set angle, click the midpoint button to flip swing direction, click the tip button to move the hinge to the other end
+  - **Area** — click polygon corners to mark named floor areas with m² calculations
+  - **Measure** — draw measurement lines; hover to see length (requires scale calibration), click × to remove
+- **Calibration** — draw a reference line and enter its real-world length to set the pixel-per-mm scale
+- **Visibility toggles** — show/hide areas and measurement lines independently
+- **Background image** — upload a floor-plan scan, adjust opacity and size, use as a tracing guide
+- **3D Tour** — Three.js/React Three Fiber walkthrough of fixed walls
+- **History panel** — list of placed elements with highlight and delete per entry
+- **Undo** — removes the most recently placed element (Cmd/Ctrl+Z)
+- **Export / Import** — save and load the full project state as JSON
+- **Persistent state** — automatically saved to `localStorage`; survives page refresh
 
-## React Compiler
+## Tech stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+| Concern | Library |
+|---------|---------|
+| UI framework | React 19 + TypeScript |
+| Build tool | Vite |
+| 2D canvas | Konva / react-konva |
+| 3D view | Three.js / @react-three/fiber + drei |
+| UI components | MUI v9 |
+| Styling | styled-components |
+| State management | Zustand |
+| Storage | localStorage (via a thin adapter) |
 
-## Expanding the ESLint configuration
+## Getting started
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Prerequisites
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+- Node.js 18+
+- npm (or pnpm / yarn)
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### Install dependencies
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Run locally
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+```bash
+npm run dev
+```
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+Open [http://localhost:5173](http://localhost:5173) in your browser.
+
+### Build for production
+
+```bash
+npm run build
+```
+
+Output lands in `dist/`.
+
+### Preview production build
+
+```bash
+npm run preview
+```
+
+### Lint
+
+```bash
+npm run lint
 ```
