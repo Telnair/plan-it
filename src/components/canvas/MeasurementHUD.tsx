@@ -11,9 +11,18 @@ interface Props {
 export function MeasurementHUD({ start, end, pixelsPerMm }: Props) {
   const mm = lineLengthMm(start, end, pixelsPerMm);
   const label = formatMm(mm);
-  const mx = (start.x + end.x) / 2;
-  const my = (start.y + end.y) / 2 - 20;
   const width = label.length * 8 + 16;
+
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  const isMoreVertical = Math.abs(dy) >= Math.abs(dx);
+
+  // For vertical strokes: place to the right so it never overlaps the line
+  // For horizontal strokes: place to the leading side (ahead of the cursor)
+  const mx = isMoreVertical
+    ? end.x + 52
+    : dx >= 0 ? end.x + 14 : end.x - width - 14;
+  const my = end.y - 10;
 
   return (
     <Group>
