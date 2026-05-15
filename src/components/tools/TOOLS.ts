@@ -28,6 +28,14 @@ export const TOOL_DEFS: ToolDef[] = [
     defaultColor: '#6b6b6b',
   },
   {
+    type: 'wall_canal',
+    label: 'Canal / Duct',
+    description: 'Communications or ventilation canal — hollow thick wall',
+    strokeWidth: 40,
+    dashEnabled: false,
+    defaultColor: '#1a1a1a',
+  },
+  {
     type: 'window',
     label: 'Window',
     description: 'Window opening',
@@ -55,7 +63,18 @@ export const AREA_SELECT_TOOL: ToolDef = {
   dash: [4, 4],
 };
 
+export const MEASURE_TOOL: ToolDef = {
+  type: 'measure',
+  label: 'Measure',
+  description: 'Draw a measurement line — hover to see length, click × to remove',
+  strokeWidth: 1.5,
+  dashEnabled: true,
+  dash: [5, 4],
+  defaultColor: '#4fc3f7' as never,
+};
+
 export function getToolDef(type: ToolType): ToolDef {
   if (type === 'area_select') return AREA_SELECT_TOOL;
+  if (type === 'measure') return MEASURE_TOOL;
   return TOOL_DEFS.find((t) => t.type === type) ?? TOOL_DEFS[0];
 }

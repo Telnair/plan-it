@@ -6,10 +6,11 @@ import { BackgroundLayer } from './BackgroundLayer';
 import { ElementsLayer } from './ElementsLayer';
 import { AreaLayer } from './AreaLayer';
 import { DrawingLayer } from './DrawingLayer';
+import { MeasurementLayer } from './MeasurementLayer';
 import { CalibrationDialog } from '../dialogs/CalibrationDialog';
 import { AreaNameDialog } from '../dialogs/AreaNameDialog';
 import { snapTo45 } from '../../utils/geometry';
-import type { Point } from '../../store/types';
+import type { Point, GrayShade, ToolType } from '../../store/types';
 import styled from 'styled-components';
 
 const CanvasContainer = styled.div`
@@ -123,8 +124,10 @@ export function PlanCanvas({ stageRef }: Props) {
       tool: activeToolType,
     };
 
-    // First ever line triggers calibration
-    if (!calibration && store.walls.length === 0 && store.windows.length === 0 && store.doors.length === 0) {
+    // First ever wall/window/door triggers calibration (measure tool skips it)
+    if (activeToolType === 'measure') {
+      store.addMeasurement({ x1: line.x1, y1: line.y1, x2: line.x2, y2: line.y2 });
+    } else if (!calibration && store.walls.length === 0 && store.windows.length === 0 && store.doors.length === 0) {
       store.setPendingCalibrationLine({ ...line, id: '' });
       setCalibOpen(true);
     } else {
@@ -135,8 +138,8 @@ export function PlanCanvas({ stageRef }: Props) {
     setDrawEnd(null);
   }
 
-  function commitLine(line: Omit<typeof store.walls[0], 'id'>) {
-    if (line.tool === 'wall_fixed' || line.tool === 'wall_movable') {
+  function commitLine(line: { x1: number; y1: number; x2: number; y2: number; color: GrayShade; tool: ToolType }) {
+    if (line.tool === 'wall_fixed' || line.tool === 'wall_movable' || line.tool === 'wall_canal') {
       store.addWall(line);
     } else if (line.tool === 'window') {
       store.addWindow(line);
@@ -201,6 +204,8 @@ export function PlanCanvas({ stageRef }: Props) {
           drawEnd={drawEnd}
           areaPolygon={pendingAreaPolygon}
         />
+
+        <MeasurementLayer />
 
         {/* Empty state hint */}
         {store.walls.length === 0 && store.windows.length === 0 && store.doors.length === 0 && !store.backgroundImage && (

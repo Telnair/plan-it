@@ -13,6 +13,7 @@ import type {
   Calibration,
   Point,
   HistoryAction,
+  MeasurementLine,
 } from './types';
 import { getToolDef } from '../components/tools/TOOLS';
 
@@ -34,6 +35,7 @@ const DEFAULT_PERSISTED: PersistedState = {
   windows: [],
   doors: [],
   areas: [],
+  measurements: [],
   calibration: null,
   history: [],
   viewSettings: {
@@ -77,6 +79,9 @@ interface AppActions {
 
   setPendingAreaPolygon: (pts: Point[]) => void;
 
+  addMeasurement: (m: Omit<MeasurementLine, 'id'>) => void;
+  removeMeasurement: (id: string) => void;
+
   removeHistoryEntry: (historyId: string) => void;
   setHighlightedElement: (id: string | null) => void;
 
@@ -98,6 +103,7 @@ function persistState(state: Store) {
     windows: state.windows,
     doors: state.doors,
     areas: state.areas,
+    measurements: state.measurements,
     calibration: state.calibration,
     history: state.history,
     viewSettings: state.viewSettings,
@@ -144,7 +150,9 @@ export const useAppStore = create<Store>((set, get) => {
     addWall: (wall) => {
       const newWall = { ...wall, id: uuidv4() };
       const toolLabel =
-        wall.tool === 'wall_fixed' ? 'Fixed Wall' : 'Movable Wall';
+        wall.tool === 'wall_fixed' ? 'Fixed Wall'
+        : wall.tool === 'wall_canal' ? 'Canal / Duct'
+        : 'Movable Wall';
       const entry = makeHistoryEntry(newWall.id, 'wall', toolLabel, wall.tool);
       const walls = [...get().walls, newWall];
       const history = cappedHistory(get().history, entry);
@@ -198,6 +206,19 @@ export const useAppStore = create<Store>((set, get) => {
       const doors = get().doors.map((d) => (d.id === id ? { ...d, ...partial } : d));
       set({ doors });
       persistState({ ...get(), doors });
+    },
+
+    addMeasurement: (m) => {
+      const newM = { ...m, id: uuidv4() };
+      const measurements = [...get().measurements, newM];
+      set({ measurements });
+      persistState({ ...get(), measurements });
+    },
+
+    removeMeasurement: (id) => {
+      const measurements = get().measurements.filter((m) => m.id !== id);
+      set({ measurements });
+      persistState({ ...get(), measurements });
     },
 
     addArea: (area) => {
@@ -276,6 +297,7 @@ export const useAppStore = create<Store>((set, get) => {
     importState: (state) => {
       set({
         ...state,
+        measurements: state.measurements ?? [],
         pendingCalibrationLine: null,
         pendingAreaPolygon: [],
         highlightedElementId: null,

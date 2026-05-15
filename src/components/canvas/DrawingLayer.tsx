@@ -50,7 +50,7 @@ export function DrawingLayer({ drawStart, drawEnd, areaPolygon }: Props) {
       {showLine && activeToolType !== 'area_select' && (
         <Line
           points={[drawStart.x, drawStart.y, drawEnd.x, drawEnd.y]}
-          stroke={activeColor}
+          stroke={activeToolType === 'measure' ? '#4fc3f7' : activeColor}
           strokeWidth={def.strokeWidth}
           dash={def.dashEnabled ? def.dash : undefined}
           lineCap="butt"

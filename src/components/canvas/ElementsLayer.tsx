@@ -1,4 +1,4 @@
-import { Layer, Line, Arc, Group, Circle } from 'react-konva';
+import { Layer, Line, Arc, Group, Circle, Shape } from 'react-konva';
 import type { LineElement, DoorElement } from '../../store/types';
 import { useAppStore } from '../../store/appStore';
 import { getToolDef } from '../tools/TOOLS';
@@ -38,6 +38,68 @@ function WallLine({
         dash={def.dashEnabled ? def.dash : undefined}
         lineCap="butt"
         lineJoin="miter"
+      />
+    </Group>
+  );
+}
+
+/** Hollow (outline-only) rectangle drawn along the line axis. */
+function CanalWallShape({
+  el,
+  highlighted = false,
+}: {
+  el: LineElement;
+  highlighted?: boolean;
+}) {
+  const half = 20; // half of 40px thickness
+  const borderWidth = 2;
+
+  return (
+    <Group>
+      {highlighted && (
+        <Shape
+          sceneFunc={(ctx, shape) => {
+            const dx = el.x2 - el.x1;
+            const dy = el.y2 - el.y1;
+            const len = Math.sqrt(dx * dx + dy * dy);
+            if (len < 1) return;
+            const nx = (-dy / len) * (half + 6);
+            const ny = (dx / len) * (half + 6);
+            ctx.beginPath();
+            ctx.moveTo(el.x1 + nx, el.y1 + ny);
+            ctx.lineTo(el.x2 + nx, el.y2 + ny);
+            ctx.lineTo(el.x2 - nx, el.y2 - ny);
+            ctx.lineTo(el.x1 - nx, el.y1 - ny);
+            ctx.closePath();
+            ctx.fillStrokeShape(shape);
+          }}
+          fill="rgba(79,195,247,0.15)"
+          stroke="#4fc3f7"
+          strokeWidth={2}
+          opacity={0.5}
+          listening={false}
+        />
+      )}
+      <Shape
+        sceneFunc={(ctx, shape) => {
+          const dx = el.x2 - el.x1;
+          const dy = el.y2 - el.y1;
+          const len = Math.sqrt(dx * dx + dy * dy);
+          if (len < 1) return;
+          const nx = (-dy / len) * half;
+          const ny = (dx / len) * half;
+          ctx.beginPath();
+          ctx.moveTo(el.x1 + nx, el.y1 + ny);
+          ctx.lineTo(el.x2 + nx, el.y2 + ny);
+          ctx.lineTo(el.x2 - nx, el.y2 - ny);
+          ctx.lineTo(el.x1 - nx, el.y1 - ny);
+          ctx.closePath();
+          ctx.fillStrokeShape(shape);
+        }}
+        fill="transparent"
+        stroke={el.color}
+        strokeWidth={borderWidth}
+        fillEnabled={false}
       />
     </Group>
   );
@@ -134,6 +196,12 @@ export function ElementsLayer({ onUpdateDoor }: Props) {
             opacity={movableOpacity}
             highlighted={highlightedElementId === w.id}
           />
+        ))}
+
+      {store.walls
+        .filter((w) => w.tool === 'wall_canal')
+        .map((w) => (
+          <CanalWallShape key={w.id} el={w} highlighted={highlightedElementId === w.id} />
         ))}
 
       {store.windows.map((w) => (

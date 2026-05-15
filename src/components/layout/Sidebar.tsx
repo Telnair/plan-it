@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import styled from 'styled-components';
 import {
   Typography,
@@ -9,9 +9,13 @@ import {
   Button,
   Tooltip,
   Chip,
+  Collapse,
+  IconButton,
 } from '@mui/material';
 import ImageIcon from '@mui/icons-material/Image';
 import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import { useAppStore } from '../../store/appStore';
 import { ToolPanel } from '../tools/ToolPanel';
 import { HistoryPanel } from './HistoryPanel';
@@ -35,6 +39,7 @@ const Section = styled.div`
 export function Sidebar() {
   const store = useAppStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [statsOpen, setStatsOpen] = useState(false);
 
   const fixedWalls = selectFixedWalls(store);
   const movableWalls = selectMovableWalls(store);
@@ -149,43 +154,53 @@ export function Sidebar() {
       <Divider sx={{ borderColor: 'rgba(255,255,255,0.08)' }} />
 
       <Section>
-        <Typography variant="caption" sx={{ color: '#6b6b6b', display: 'block', mb: 1 }}>
-          STATS
-        </Typography>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-            <Typography variant="body2" sx={{ color: '#9e9e9e' }}>Fixed walls</Typography>
-            <Chip label={fixedWalls.length} size="small" sx={{ height: 18, fontSize: '0.7rem' }} />
-          </Box>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-            <Typography variant="body2" sx={{ color: '#9e9e9e' }}>Movable walls</Typography>
-            <Chip label={movableWalls.length} size="small" sx={{ height: 18, fontSize: '0.7rem' }} />
-          </Box>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-            <Typography variant="body2" sx={{ color: '#9e9e9e' }}>Windows</Typography>
-            <Chip label={store.windows.length} size="small" sx={{ height: 18, fontSize: '0.7rem' }} />
-          </Box>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-            <Typography variant="body2" sx={{ color: '#9e9e9e' }}>Doors</Typography>
-            <Chip label={store.doors.length} size="small" sx={{ height: 18, fontSize: '0.7rem' }} />
-          </Box>
-          {totalArea > 0 && (
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.5 }}>
-              <Typography variant="body2" sx={{ color: '#9e9e9e' }}>Total area</Typography>
-              <Chip
-                label={`${totalArea.toFixed(1)} m²`}
-                size="small"
-                color="primary"
-                sx={{ height: 18, fontSize: '0.7rem' }}
-              />
-            </Box>
-          )}
-          {store.calibration && (
-            <Typography variant="caption" sx={{ color: '#4fc3f7', mt: 0.5 }}>
-              Calibrated ✓
-            </Typography>
-          )}
+        <Box
+          sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', mb: statsOpen ? 1 : 0 }}
+          onClick={() => setStatsOpen((v) => !v)}
+        >
+          <Typography variant="caption" sx={{ color: '#6b6b6b' }}>
+            STATS
+          </Typography>
+          <IconButton size="small" sx={{ p: 0, color: '#6b6b6b' }}>
+            {statsOpen ? <ExpandLessIcon sx={{ fontSize: 16 }} /> : <ExpandMoreIcon sx={{ fontSize: 16 }} />}
+          </IconButton>
         </Box>
+        <Collapse in={statsOpen}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+              <Typography variant="body2" sx={{ color: '#9e9e9e' }}>Fixed walls</Typography>
+              <Chip label={fixedWalls.length} size="small" sx={{ height: 18, fontSize: '0.7rem' }} />
+            </Box>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+              <Typography variant="body2" sx={{ color: '#9e9e9e' }}>Movable walls</Typography>
+              <Chip label={movableWalls.length} size="small" sx={{ height: 18, fontSize: '0.7rem' }} />
+            </Box>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+              <Typography variant="body2" sx={{ color: '#9e9e9e' }}>Windows</Typography>
+              <Chip label={store.windows.length} size="small" sx={{ height: 18, fontSize: '0.7rem' }} />
+            </Box>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+              <Typography variant="body2" sx={{ color: '#9e9e9e' }}>Doors</Typography>
+              <Chip label={store.doors.length} size="small" sx={{ height: 18, fontSize: '0.7rem' }} />
+            </Box>
+            {totalArea > 0 && (
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.5 }}>
+                <Typography variant="body2" sx={{ color: '#9e9e9e' }}>Total area</Typography>
+                <Chip
+                  label={`${totalArea.toFixed(1)} m²`}
+                  size="small"
+                  color="primary"
+                  sx={{ height: 18, fontSize: '0.7rem' }}
+                />
+              </Box>
+            )}
+            {store.calibration && (
+              <Typography variant="caption" sx={{ color: '#4fc3f7', mt: 0.5 }}>
+                Calibrated ✓
+              </Typography>
+            )}
+          </Box>
+        </Collapse>
       </Section>
 
       {store.areas.length > 0 && (

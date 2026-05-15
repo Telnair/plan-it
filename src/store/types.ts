@@ -1,4 +1,4 @@
-export type ToolType = 'wall_fixed' | 'wall_movable' | 'window' | 'door' | 'area_select';
+export type ToolType = 'wall_fixed' | 'wall_movable' | 'wall_canal' | 'window' | 'door' | 'area_select' | 'measure';
 
 export type GrayShade = '#1a1a1a' | '#3d3d3d' | '#6b6b6b' | '#9e9e9e' | '#c8c8c8';
 
@@ -60,6 +60,14 @@ export interface HistoryAction {
   timestamp: number;
 }
 
+export interface MeasurementLine {
+  id: string;
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+}
+
 export interface AppState {
   mode: AppMode;
   backgroundImage: string | null;
@@ -70,6 +78,7 @@ export interface AppState {
   calibration: Calibration | null;
   viewSettings: ViewSettings;
   history: HistoryAction[];
+  measurements: MeasurementLine[];
   activeToolType: ToolType;
   activeColor: GrayShade;
   // transient UI state (not persisted)

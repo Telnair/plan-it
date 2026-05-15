@@ -1,7 +1,7 @@
 import styled from 'styled-components';
 import { Tooltip, Typography, Divider } from '@mui/material';
 import { useAppStore } from '../../store/appStore';
-import { TOOL_DEFS, AREA_SELECT_TOOL } from './TOOLS';
+import { TOOL_DEFS, AREA_SELECT_TOOL, MEASURE_TOOL } from './TOOLS';
 import type { ToolType, GrayShade } from '../../store/types';
 import { GRAY_SHADES } from '../../store/types';
 
@@ -69,7 +69,11 @@ export function ToolPanel() {
   const { activeToolType, activeColor, setActiveTool, setActiveColor, mode } = useAppStore();
   const showAreaTool = mode === 'plan';
 
-  const tools = showAreaTool ? [...TOOL_DEFS, AREA_SELECT_TOOL] : TOOL_DEFS;
+  const tools = [
+    ...TOOL_DEFS,
+    ...(showAreaTool ? [AREA_SELECT_TOOL] : []),
+    MEASURE_TOOL,
+  ];
 
   return (
     <Panel>
