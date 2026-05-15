@@ -89,4 +89,10 @@ export interface AppState {
   pendingAreaPolygon: Point[];
   highlightedElementId: string | null;
   isSettingAnchor: boolean;
+  redoStack: RedoItem[];
+}
+
+export interface RedoItem {
+  entry: HistoryAction;
+  element: LineElement | DoorElement | Area;
 }

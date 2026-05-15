@@ -14,6 +14,7 @@ import type {
   Point,
   HistoryAction,
   MeasurementLine,
+  RedoItem,
 } from './types';
 import { getToolDef } from '../components/tools/TOOLS';
 
@@ -27,6 +28,7 @@ type PersistedState = Omit<AppState,
   | 'activeColor'
   | 'highlightedElementId'
   | 'isSettingAnchor'
+  | 'redoStack'
 >;
 
 const DEFAULT_PERSISTED: PersistedState = {
@@ -64,6 +66,7 @@ interface AppActions {
 
   addWindow: (win: Omit<LineElement, 'id'>) => void;
   removeWindow: (id: string) => void;
+  updateWindow: (id: string, partial: Partial<LineElement>) => void;
 
   addDoor: (door: Omit<DoorElement, 'id'>) => void;
   removeDoor: (id: string) => void;
@@ -93,6 +96,8 @@ interface AppActions {
 
   undo: () => void;
   canUndo: () => boolean;
+  redo: () => void;
+  canRedo: () => boolean;
 
   importState: (state: PersistedState) => void;
   resetState: () => void;
@@ -144,6 +149,7 @@ export const useAppStore = create<Store>((set, get) => {
     pendingAreaPolygon: [],
     highlightedElementId: null,
     isSettingAnchor: false,
+    redoStack: [],
 
     setMode: (mode) => {
       set({ mode });
@@ -164,7 +170,7 @@ export const useAppStore = create<Store>((set, get) => {
       const entry = makeHistoryEntry(newWall.id, 'wall', toolLabel, wall.tool);
       const walls = [...get().walls, newWall];
       const history = cappedHistory(get().history, entry);
-      set({ walls, history });
+      set({ walls, history, redoStack: [] });
       persistState({ ...get(), walls, history });
     },
 
@@ -185,7 +191,7 @@ export const useAppStore = create<Store>((set, get) => {
       const entry = makeHistoryEntry(newWin.id, 'window', 'Window', 'window');
       const windows = [...get().windows, newWin];
       const history = cappedHistory(get().history, entry);
-      set({ windows, history });
+      set({ windows, history, redoStack: [] });
       persistState({ ...get(), windows, history });
     },
 
@@ -195,12 +201,18 @@ export const useAppStore = create<Store>((set, get) => {
       persistState({ ...get(), windows });
     },
 
+    updateWindow: (id, partial) => {
+      const windows = get().windows.map((w) => (w.id === id ? { ...w, ...partial } : w));
+      set({ windows });
+      persistState({ ...get(), windows });
+    },
+
     addDoor: (door) => {
       const newDoor = { ...door, id: uuidv4() };
       const entry = makeHistoryEntry(newDoor.id, 'door', 'Door', 'door');
       const doors = [...get().doors, newDoor];
       const history = cappedHistory(get().history, entry);
-      set({ doors, history });
+      set({ doors, history, redoStack: [] });
       persistState({ ...get(), doors, history });
     },
 
@@ -234,7 +246,7 @@ export const useAppStore = create<Store>((set, get) => {
       const entry = makeHistoryEntry(newArea.id, 'area', area.name, 'area_select');
       const areas = [...get().areas, newArea];
       const history = cappedHistory(get().history, entry);
-      set({ areas, history });
+      set({ areas, history, redoStack: [] });
       persistState({ ...get(), areas, history });
     },
 
@@ -301,12 +313,62 @@ export const useAppStore = create<Store>((set, get) => {
     setIsSettingAnchor: (isSettingAnchor) => set({ isSettingAnchor }),
 
     canUndo: () => get().history.length > 0,
+    canRedo: () => get().redoStack.length > 0,
 
     undo: () => {
-      const history = get().history;
+      const state = get();
+      const { history } = state;
       if (history.length === 0) return;
       const last = history[history.length - 1];
-      get().removeHistoryEntry(last.id);
+
+      // Snapshot element for potential redo
+      let element: LineElement | DoorElement | Area | undefined;
+      if (last.elementType === 'wall')   element = state.walls.find((w) => w.id === last.elementId);
+      else if (last.elementType === 'window') element = state.windows.find((w) => w.id === last.elementId);
+      else if (last.elementType === 'door')   element = state.doors.find((d) => d.id === last.elementId);
+      else if (last.elementType === 'area')   element = state.areas.find((a) => a.id === last.elementId);
+
+      const walls   = last.elementType === 'wall'   ? state.walls.filter((w) => w.id !== last.elementId)   : state.walls;
+      const windows = last.elementType === 'window' ? state.windows.filter((w) => w.id !== last.elementId) : state.windows;
+      const doors   = last.elementType === 'door'   ? state.doors.filter((d) => d.id !== last.elementId)   : state.doors;
+      const areas   = last.elementType === 'area'   ? state.areas.filter((a) => a.id !== last.elementId)   : state.areas;
+      const newHistory = history.slice(0, -1);
+      const highlightedElementId = state.highlightedElementId === last.elementId ? null : state.highlightedElementId;
+
+      const redoStack: RedoItem[] = element
+        ? [...state.redoStack, { entry: last, element }].slice(-MAX_HISTORY)
+        : state.redoStack;
+
+      set({ walls, windows, doors, areas, history: newHistory, highlightedElementId, redoStack });
+      persistState({ ...get(), walls, windows, doors, areas, history: newHistory });
+    },
+
+    redo: () => {
+      const state = get();
+      const { redoStack } = state;
+      if (redoStack.length === 0) return;
+      const item = redoStack[redoStack.length - 1];
+      const newRedoStack = redoStack.slice(0, -1);
+      const { entry, element } = item;
+      const newHistory = cappedHistory(state.history, entry);
+
+      if (entry.elementType === 'wall') {
+        const walls = [...state.walls, element as LineElement];
+        set({ walls, history: newHistory, redoStack: newRedoStack });
+        persistState({ ...get(), walls, history: newHistory });
+      } else if (entry.elementType === 'window') {
+        const windows = [...state.windows, element as LineElement];
+        set({ windows, history: newHistory, redoStack: newRedoStack });
+        persistState({ ...get(), windows, history: newHistory });
+      } else if (entry.elementType === 'door') {
+        const doors = [...state.doors, element as DoorElement];
+        set({ doors, history: newHistory, redoStack: newRedoStack });
+        persistState({ ...get(), doors, history: newHistory });
+      } else if (entry.elementType === 'area') {
+        const areas = [...state.areas, element as Area];
+        set({ areas, history: newHistory, redoStack: newRedoStack });
+        persistState({ ...get(), areas, history: newHistory });
+      }
     },
 
     importState: (state) => {
@@ -330,6 +392,7 @@ export const useAppStore = create<Store>((set, get) => {
         pendingAreaPolygon: [],
         highlightedElementId: null,
         isSettingAnchor: false,
+        redoStack: [],
       });
     },
 

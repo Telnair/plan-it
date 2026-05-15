@@ -17,15 +17,21 @@ function WallLine({
   highlighted?: boolean;
 }) {
   const def = getToolDef(el.tool);
+  const { setHighlightedElement } = useAppStore();
+
+  function handleSelect() {
+    setHighlightedElement(highlighted ? null : el.id);
+  }
+
   return (
-    <Group opacity={opacity}>
+    <Group opacity={opacity} onClick={handleSelect} onTap={handleSelect}>
       {/* Highlight glow rendered behind the main stroke */}
       {highlighted && (
         <Line
           points={[el.x1, el.y1, el.x2, el.y2]}
           stroke="#4fc3f7"
           strokeWidth={def.strokeWidth + 10}
-          lineCap="square"
+          lineCap="butt"
           lineJoin="miter"
           opacity={0.4}
           listening={false}
@@ -36,8 +42,9 @@ function WallLine({
         stroke={el.color}
         strokeWidth={def.strokeWidth}
         dash={def.dashEnabled ? def.dash : undefined}
-        lineCap="square"
+        lineCap="butt"
         lineJoin="miter"
+        hitStrokeWidth={Math.max(def.strokeWidth, 12)}
       />
     </Group>
   );
@@ -51,11 +58,18 @@ function CanalWallShape({
   el: LineElement;
   highlighted?: boolean;
 }) {
-  const half = 20; // half of 40px thickness
   const borderWidth = 8;
+  // Subtract half the stroke width so the outer VISUAL edge sits at exactly
+  // strokeWidth/2 (20 px) from the centre line, matching the 40 px cursor preview.
+  const half = 20 - borderWidth / 2; // = 16 px path offset → 16+4 = 20 px visual edge
+  const { setHighlightedElement } = useAppStore();
+
+  function handleSelect() {
+    setHighlightedElement(highlighted ? null : el.id);
+  }
 
   return (
-    <Group>
+    <Group onClick={handleSelect} onTap={handleSelect}>
       {highlighted && (
         <Shape
           sceneFunc={(ctx, shape) => {
@@ -65,11 +79,14 @@ function CanalWallShape({
             if (len < 1) return;
             const nx = (-dy / len) * (half + 6);
             const ny = (dx / len) * (half + 6);
+            // inset endpoints so highlight glow also stays within bounds
+            const lx = (dx / len) * (borderWidth / 2);
+            const ly = (dy / len) * (borderWidth / 2);
             ctx.beginPath();
-            ctx.moveTo(el.x1 + nx, el.y1 + ny);
-            ctx.lineTo(el.x2 + nx, el.y2 + ny);
-            ctx.lineTo(el.x2 - nx, el.y2 - ny);
-            ctx.lineTo(el.x1 - nx, el.y1 - ny);
+            ctx.moveTo(el.x1 + lx + nx, el.y1 + ly + ny);
+            ctx.lineTo(el.x2 - lx + nx, el.y2 - ly + ny);
+            ctx.lineTo(el.x2 - lx - nx, el.y2 - ly - ny);
+            ctx.lineTo(el.x1 + lx - nx, el.y1 + ly - ny);
             ctx.closePath();
             ctx.fillStrokeShape(shape);
           }}
@@ -88,11 +105,15 @@ function CanalWallShape({
           if (len < 1) return;
           const nx = (-dy / len) * half;
           const ny = (dx / len) * half;
+          // inset endpoints by half the stroke width so the outer stroke edge
+          // lands exactly at (el.x1, el.y1) and (el.x2, el.y2)
+          const lx = (dx / len) * (borderWidth / 2);
+          const ly = (dy / len) * (borderWidth / 2);
           ctx.beginPath();
-          ctx.moveTo(el.x1 + nx, el.y1 + ny);
-          ctx.lineTo(el.x2 + nx, el.y2 + ny);
-          ctx.lineTo(el.x2 - nx, el.y2 - ny);
-          ctx.lineTo(el.x1 - nx, el.y1 - ny);
+          ctx.moveTo(el.x1 + lx + nx, el.y1 + ly + ny);
+          ctx.lineTo(el.x2 - lx + nx, el.y2 - ly + ny);
+          ctx.lineTo(el.x2 - lx - nx, el.y2 - ly - ny);
+          ctx.lineTo(el.x1 + lx - nx, el.y1 + ly - ny);
           ctx.closePath();
           ctx.fillStrokeShape(shape);
         }}

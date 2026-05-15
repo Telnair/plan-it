@@ -58,7 +58,7 @@ export function DrawingLayer({ drawStart, drawEnd, areaPolygon, cursorPos }: Pro
           stroke={activeToolType === 'measure' ? '#4fc3f7' : activeColor}
           strokeWidth={def.strokeWidth}
           dash={def.dashEnabled ? def.dash : undefined}
-          lineCap="square"
+          lineCap="butt"
           lineJoin="miter"
           opacity={0.7}
         />
@@ -91,18 +91,42 @@ export function DrawingLayer({ drawStart, drawEnd, areaPolygon, cursorPos }: Pro
         </>
       )}
 
-      {/* Solid brush cursor — same fill/size as the resulting stroke */}
-      {showSquareCursor && (
-        <Rect
-          x={cursorPos!.x - cursorSize / 2}
-          y={cursorPos!.y - cursorSize / 2}
-          width={cursorSize}
-          height={cursorSize}
-          fill={cursorColor}
-          listening={false}
-          opacity={0.85}
-        />
-      )}
+      {/* Crosshair cursor: hollow square showing line boundaries + lines marking the center */}
+      {showSquareCursor && (() => {
+        const cx = cursorPos!.x;
+        const cy = cursorPos!.y;
+        const half = cursorSize / 2;
+        const arm = half + 6;
+        return (
+          <>
+            <Rect
+              x={cx - half}
+              y={cy - half}
+              width={cursorSize}
+              height={cursorSize}
+              fill="transparent"
+              stroke={cursorColor}
+              strokeWidth={1.5}
+              listening={false}
+              opacity={0.9}
+            />
+            <Line
+              points={[cx - arm, cy, cx + arm, cy]}
+              stroke={cursorColor}
+              strokeWidth={1}
+              listening={false}
+              opacity={0.9}
+            />
+            <Line
+              points={[cx, cy - arm, cx, cy + arm]}
+              stroke={cursorColor}
+              strokeWidth={1}
+              listening={false}
+              opacity={0.9}
+            />
+          </>
+        );
+      })()}
 
       {/* Tour anchor marker */}
       {tourAnchor && (

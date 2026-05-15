@@ -5,6 +5,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import DownloadIcon from '@mui/icons-material/Download';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import UndoIcon from '@mui/icons-material/Undo';
+import RedoIcon from '@mui/icons-material/Redo';
 import MyLocationIcon from '@mui/icons-material/MyLocation';
 import { useAppStore } from '../../store/appStore';
 import { Sidebar } from './Sidebar';
@@ -44,7 +45,7 @@ const AppTitle = styled(Typography)`
 `;
 
 export function AppShell({ children, onExport }: Props) {
-  const { mode, setMode, resetState, undo, canUndo, isSettingAnchor, setIsSettingAnchor, tourAnchor } = useAppStore();
+  const { mode, setMode, resetState, undo, canUndo, redo, canRedo, isSettingAnchor, setIsSettingAnchor, tourAnchor } = useAppStore();
 
   return (
     <Shell>
@@ -108,6 +109,21 @@ export function AppShell({ children, onExport }: Props) {
                 sx={{ opacity: canUndo() ? 1 : 0.35 }}
               >
                 Undo
+              </Button>
+            </span>
+          </Tooltip>
+
+          <Tooltip title="Redo (⌘Shift+Z / Ctrl+Y)">
+            <span>
+              <Button
+                size="small"
+                startIcon={<RedoIcon />}
+                onClick={redo}
+                disabled={!canRedo()}
+                color="inherit"
+                sx={{ opacity: canRedo() ? 1 : 0.35 }}
+              >
+                Redo
               </Button>
             </span>
           </Tooltip>

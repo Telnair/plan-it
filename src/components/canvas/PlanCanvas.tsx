@@ -10,7 +10,7 @@ import { MeasurementLayer } from './MeasurementLayer';
 import { CalibrationDialog } from '../dialogs/CalibrationDialog';
 import { AreaNameDialog } from '../dialogs/AreaNameDialog';
 import { snapTo45 } from '../../utils/geometry';
-import type { Point, GrayShade, ToolType } from '../../store/types';
+import type { Point, GrayShade, ToolType, LineElement } from '../../store/types';
 import styled from 'styled-components';
 
 const CanvasContainer = styled.div<{ $hideNativeCursor: boolean }>`
@@ -22,15 +22,14 @@ const CanvasContainer = styled.div<{ $hideNativeCursor: boolean }>`
 
 const HintBanner = styled.div`
   position: absolute;
-  bottom: 16px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(30, 30, 30, 0.9);
-  border: 1px solid rgba(79, 195, 247, 0.3);
-  border-radius: 8px;
-  padding: 8px 16px;
-  font-size: 0.78rem;
-  color: #9e9e9e;
+  bottom: 12px;
+  right: 12px;
+  background: rgba(20, 20, 20, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 0.7rem;
+  color: #bdbdbd;
   pointer-events: none;
   white-space: nowrap;
 `;
@@ -52,6 +51,35 @@ export function PlanCanvas({ stageRef }: Props) {
   const { activeToolType, activeColor, calibration, mode, pendingAreaPolygon, isSettingAnchor } = store;
 
   const hideNativeCursor = activeToolType !== 'area_select' && activeToolType !== 'measure';
+
+  // Arrow key movement for the selected element
+  useEffect(() => {
+    const ARROWS = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
+
+    function onKeyDown(e: KeyboardEvent) {
+      if (!store.highlightedElementId) return;
+      if (!ARROWS.includes(e.key)) return;
+      e.preventDefault();
+
+      const step = e.shiftKey ? 10 : 1;
+      const dx = e.key === 'ArrowLeft' ? -step : e.key === 'ArrowRight' ? step : 0;
+      const dy = e.key === 'ArrowUp' ? -step : e.key === 'ArrowDown' ? step : 0;
+      const id = store.highlightedElementId;
+      const shift = (el: LineElement) => ({ x1: el.x1 + dx, y1: el.y1 + dy, x2: el.x2 + dx, y2: el.y2 + dy });
+
+      const wall = store.walls.find((w) => w.id === id);
+      if (wall) { store.updateWall(id, shift(wall)); return; }
+
+      const win = store.windows.find((w) => w.id === id);
+      if (win) { store.updateWindow(id, shift(win)); return; }
+
+      const door = store.doors.find((d) => d.id === id);
+      if (door) { store.updateDoor(id, shift(door)); }
+    }
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [store]);
 
   // Resize observer
   useEffect(() => {
