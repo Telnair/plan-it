@@ -13,11 +13,11 @@ import { snapTo45 } from '../../utils/geometry';
 import type { Point, GrayShade, ToolType } from '../../store/types';
 import styled from 'styled-components';
 
-const CanvasContainer = styled.div`
+const CanvasContainer = styled.div<{ $hideNativeCursor: boolean }>`
   width: 100%;
   height: 100%;
   position: relative;
-  cursor: crosshair;
+  cursor: ${(p) => (p.$hideNativeCursor ? 'none' : 'crosshair')};
 `;
 
 const HintBanner = styled.div`
@@ -44,11 +44,14 @@ export function PlanCanvas({ stageRef }: Props) {
   const [size, setSize] = useState({ w: 800, h: 600 });
   const [drawStart, setDrawStart] = useState<Point | null>(null);
   const [drawEnd, setDrawEnd] = useState<Point | null>(null);
+  const [cursorPos, setCursorPos] = useState<Point | null>(null);
   const [calibOpen, setCalibOpen] = useState(false);
   const [areaDialogOpen, setAreaDialogOpen] = useState(false);
 
   const store = useAppStore();
-  const { activeToolType, activeColor, calibration, mode, pendingAreaPolygon } = store;
+  const { activeToolType, activeColor, calibration, mode, pendingAreaPolygon, isSettingAnchor } = store;
+
+  const hideNativeCursor = activeToolType !== 'area_select' && activeToolType !== 'measure';
 
   // Resize observer
   useEffect(() => {
@@ -62,10 +65,14 @@ export function PlanCanvas({ stageRef }: Props) {
     return () => ro.disconnect();
   }, []);
 
-  function getPointerPos(e: Konva.KonvaEventObject<MouseEvent>): Point {
+  function getRawPointerPos(e: Konva.KonvaEventObject<MouseEvent>): Point {
     const stage = e.target.getStage();
     const pos = stage?.getPointerPosition() ?? { x: 0, y: 0 };
-    const raw: Point = { x: pos.x, y: pos.y };
+    return { x: pos.x, y: pos.y };
+  }
+
+  function getPointerPos(e: Konva.KonvaEventObject<MouseEvent>): Point {
+    const raw = getRawPointerPos(e);
     return e.evt.shiftKey && drawStart ? snapTo45(drawStart, raw) : raw;
   }
 
@@ -73,6 +80,13 @@ export function PlanCanvas({ stageRef }: Props) {
     if (mode === 'tour3d') return;
 
     const pos = getPointerPos(e);
+
+    // Anchor placement mode: next click sets the 3D start point
+    if (isSettingAnchor) {
+      store.setTourAnchor(getRawPointerPos(e));
+      store.setIsSettingAnchor(false);
+      return;
+    }
 
     if (activeToolType === 'area_select') {
       // Check if clicking near the first point to close the polygon
@@ -97,8 +111,17 @@ export function PlanCanvas({ stageRef }: Props) {
   }
 
   function handleMouseMove(e: Konva.KonvaEventObject<MouseEvent>) {
+    const raw = getRawPointerPos(e);
+    setCursorPos(raw);
     if (!drawStart && activeToolType !== 'area_select') return;
     setDrawEnd(getPointerPos(e));
+  }
+
+  function handleClick(e: Konva.KonvaEventObject<MouseEvent>) {
+    // Clear door/element selection when clicking empty canvas
+    if (e.target === e.target.getStage()) {
+      store.setHighlightedElement(null);
+    }
   }
 
   function handleMouseUp(_e: Konva.KonvaEventObject<MouseEvent>) {
@@ -160,7 +183,11 @@ export function PlanCanvas({ stageRef }: Props) {
   })();
 
   return (
-    <CanvasContainer ref={containerRef}>
+    <CanvasContainer
+      ref={containerRef}
+      $hideNativeCursor={hideNativeCursor}
+      onMouseLeave={() => setCursorPos(null)}
+    >
       <Stage
         ref={stageRef}
         width={size.w}
@@ -168,6 +195,7 @@ export function PlanCanvas({ stageRef }: Props) {
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
+        onClick={handleClick}
         style={{ background: '#f5f5f5' }}
       >
         {/* Dot grid — visual reference only, no snapping */}
@@ -204,6 +232,7 @@ export function PlanCanvas({ stageRef }: Props) {
           drawStart={drawStart}
           drawEnd={drawEnd}
           areaPolygon={pendingAreaPolygon}
+          cursorPos={cursorPos}
         />
 
         <MeasurementLayer />

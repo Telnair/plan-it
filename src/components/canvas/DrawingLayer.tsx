@@ -1,4 +1,4 @@
-import { Layer, Line, Circle, Text } from 'react-konva';
+import { Layer, Line, Circle, Text, Rect } from 'react-konva';
 import type { Point } from '../../store/types';
 import { useAppStore } from '../../store/appStore';
 import { getToolDef } from '../tools/TOOLS';
@@ -9,11 +9,16 @@ interface Props {
   drawStart: Point | null;
   drawEnd: Point | null;
   areaPolygon: Point[];
+  cursorPos: Point | null;
 }
 
-export function DrawingLayer({ drawStart, drawEnd, areaPolygon }: Props) {
-  const { activeToolType, activeColor, calibration } = useAppStore();
+export function DrawingLayer({ drawStart, drawEnd, areaPolygon, cursorPos }: Props) {
+  const { activeToolType, activeColor, calibration, tourAnchor } = useAppStore();
   const def = getToolDef(activeToolType);
+
+  const showSquareCursor = cursorPos && activeToolType !== 'area_select' && activeToolType !== 'measure';
+  const cursorSize = def.strokeWidth;
+  const cursorColor = activeToolType === 'measure' ? '#4fc3f7' : activeColor;
 
   const showLine = drawStart && drawEnd;
   const showMeasurement = showLine && calibration;
@@ -53,7 +58,7 @@ export function DrawingLayer({ drawStart, drawEnd, areaPolygon }: Props) {
           stroke={activeToolType === 'measure' ? '#4fc3f7' : activeColor}
           strokeWidth={def.strokeWidth}
           dash={def.dashEnabled ? def.dash : undefined}
-          lineCap="butt"
+          lineCap="square"
           lineJoin="miter"
           opacity={0.7}
         />
@@ -82,6 +87,42 @@ export function DrawingLayer({ drawStart, drawEnd, areaPolygon }: Props) {
             text={`${Math.round(dist(drawStart!, drawEnd!))} px`}
             fontSize={11}
             fill="#9e9e9e"
+          />
+        </>
+      )}
+
+      {/* Solid brush cursor — same fill/size as the resulting stroke */}
+      {showSquareCursor && (
+        <Rect
+          x={cursorPos!.x - cursorSize / 2}
+          y={cursorPos!.y - cursorSize / 2}
+          width={cursorSize}
+          height={cursorSize}
+          fill={cursorColor}
+          listening={false}
+          opacity={0.85}
+        />
+      )}
+
+      {/* Tour anchor marker */}
+      {tourAnchor && (
+        <>
+          <Circle
+            x={tourAnchor.x}
+            y={tourAnchor.y}
+            radius={8}
+            fill="#ff7043"
+            stroke="#fff"
+            strokeWidth={1.5}
+            listening={false}
+          />
+          <Text
+            x={tourAnchor.x + 12}
+            y={tourAnchor.y - 7}
+            text="Entrance"
+            fontSize={11}
+            fill="#ff7043"
+            listening={false}
           />
         </>
       )}

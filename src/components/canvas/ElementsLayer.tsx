@@ -25,7 +25,7 @@ function WallLine({
           points={[el.x1, el.y1, el.x2, el.y2]}
           stroke="#4fc3f7"
           strokeWidth={def.strokeWidth + 10}
-          lineCap="butt"
+          lineCap="square"
           lineJoin="miter"
           opacity={0.4}
           listening={false}
@@ -36,7 +36,7 @@ function WallLine({
         stroke={el.color}
         strokeWidth={def.strokeWidth}
         dash={def.dashEnabled ? def.dash : undefined}
-        lineCap="butt"
+        lineCap="square"
         lineJoin="miter"
       />
     </Group>
@@ -114,6 +114,12 @@ function DoorShape({
   highlighted?: boolean;
   onUpdateDoor?: (id: string, partial: Partial<DoorElement>) => void;
 }) {
+  const { setHighlightedElement } = useAppStore();
+
+  function handleSelect() {
+    setHighlightedElement(highlighted ? null : door.id);
+  }
+
   // Determine hinge vs tip based on hingeFlipped flag
   const hx = door.hingeFlipped ? door.x2 : door.x1;
   const hy = door.hingeFlipped ? door.y2 : door.y1;
@@ -135,7 +141,7 @@ function DoorShape({
   const midY = (door.y1 + door.y2) / 2;
 
   return (
-    <Group>
+    <Group onClick={handleSelect} onTap={handleSelect}>
       {highlighted && (
         <Line
           points={[door.x1, door.y1, door.x2, door.y2]}
@@ -151,6 +157,7 @@ function DoorShape({
         stroke={door.color}
         strokeWidth={2}
         lineCap="butt"
+        hitStrokeWidth={12}
       />
       <Arc
         x={hx}
@@ -165,7 +172,7 @@ function DoorShape({
         fill="rgba(79,195,247,0.05)"
       />
 
-      {/* Angle drag handle */}
+      {/* Angle drag handle — always visible so the user can adjust arc without selecting first */}
       {onUpdateDoor && (
         <Circle
           x={handleX}
@@ -173,7 +180,10 @@ function DoorShape({
           radius={6}
           fill="#4fc3f7"
           draggable
+          onClick={(e) => e.cancelBubble = true}
+          onTap={(e) => e.cancelBubble = true}
           onDragMove={(e) => {
+            e.cancelBubble = true;
             const px = e.target.x() - hx;
             const py = e.target.y() - hy;
             let newAngle = (Math.atan2(py, px) * 180) / Math.PI - baseAngle;
@@ -188,8 +198,8 @@ function DoorShape({
         <Group
           x={midX}
           y={midY - 18}
-          onClick={() => onUpdateDoor(door.id, { openingDirection: door.openingDirection === 1 ? -1 : 1 })}
-          onTap={() => onUpdateDoor(door.id, { openingDirection: door.openingDirection === 1 ? -1 : 1 })}
+          onClick={(e) => { e.cancelBubble = true; onUpdateDoor(door.id, { openingDirection: door.openingDirection === 1 ? -1 : 1 }); }}
+          onTap={(e) => { e.cancelBubble = true; onUpdateDoor(door.id, { openingDirection: door.openingDirection === 1 ? -1 : 1 }); }}
         >
           <Circle radius={10} fill="#1e1e1e" stroke="#4fc3f7" strokeWidth={1.5} />
           <Line
@@ -207,8 +217,8 @@ function DoorShape({
         <Group
           x={tx}
           y={ty}
-          onClick={() => onUpdateDoor(door.id, { hingeFlipped: !door.hingeFlipped })}
-          onTap={() => onUpdateDoor(door.id, { hingeFlipped: !door.hingeFlipped })}
+          onClick={(e) => { e.cancelBubble = true; onUpdateDoor(door.id, { hingeFlipped: !door.hingeFlipped }); }}
+          onTap={(e) => { e.cancelBubble = true; onUpdateDoor(door.id, { hingeFlipped: !door.hingeFlipped }); }}
         >
           <Circle radius={9} fill="#1e1e1e" stroke="#ffb74d" strokeWidth={1.5} />
           <Line

@@ -26,6 +26,7 @@ type PersistedState = Omit<AppState,
   | 'activeToolType'
   | 'activeColor'
   | 'highlightedElementId'
+  | 'isSettingAnchor'
 >;
 
 const DEFAULT_PERSISTED: PersistedState = {
@@ -38,6 +39,7 @@ const DEFAULT_PERSISTED: PersistedState = {
   measurements: [],
   calibration: null,
   history: [],
+  tourAnchor: null,
   viewSettings: {
     showMeasurements: true,
     showAreas: true,
@@ -86,6 +88,9 @@ interface AppActions {
   removeHistoryEntry: (historyId: string) => void;
   setHighlightedElement: (id: string | null) => void;
 
+  setTourAnchor: (p: Point | null) => void;
+  setIsSettingAnchor: (v: boolean) => void;
+
   undo: () => void;
   canUndo: () => boolean;
 
@@ -107,6 +112,7 @@ function persistState(state: Store) {
     measurements: state.measurements,
     calibration: state.calibration,
     history: state.history,
+    tourAnchor: state.tourAnchor,
     viewSettings: state.viewSettings,
   };
   storageAdapter.set(STORAGE_KEY, toSave);
@@ -137,6 +143,7 @@ export const useAppStore = create<Store>((set, get) => {
     pendingCalibrationLine: null,
     pendingAreaPolygon: [],
     highlightedElementId: null,
+    isSettingAnchor: false,
 
     setMode: (mode) => {
       set({ mode });
@@ -286,6 +293,13 @@ export const useAppStore = create<Store>((set, get) => {
 
     setHighlightedElement: (highlightedElementId) => set({ highlightedElementId }),
 
+    setTourAnchor: (tourAnchor) => {
+      set({ tourAnchor });
+      persistState({ ...get(), tourAnchor });
+    },
+
+    setIsSettingAnchor: (isSettingAnchor) => set({ isSettingAnchor }),
+
     canUndo: () => get().history.length > 0,
 
     undo: () => {
@@ -315,6 +329,7 @@ export const useAppStore = create<Store>((set, get) => {
         pendingCalibrationLine: null,
         pendingAreaPolygon: [],
         highlightedElementId: null,
+        isSettingAnchor: false,
       });
     },
 

@@ -1,5 +1,6 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
+import { useThree } from '@react-three/fiber';
 import { PointerLockControls, Sky } from '@react-three/drei';
 import { useAppStore } from '../../store/appStore';
 import { WallMesh } from './WallMesh';
@@ -45,6 +46,25 @@ const HUD = styled.div`
 `;
 
 const WALL_HEIGHT = 2.5; // metres
+const EYE_HEIGHT = 1.6; // metres
+
+function CameraInitializer() {
+  const { tourAnchor, calibration } = useAppStore();
+  const { camera } = useThree();
+
+  useEffect(() => {
+    if (tourAnchor && calibration) {
+      const ppm = calibration.pixelsPerMm;
+      const x = tourAnchor.x / ppm / 1000;
+      const z = tourAnchor.y / ppm / 1000;
+      camera.position.set(x, EYE_HEIGHT, z);
+    }
+  // Only run on mount — not on every anchor change; re-entering the 3D view applies the anchor fresh
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return null;
+}
 
 function EmptyScene() {
   return (
@@ -71,7 +91,7 @@ export function RoomScene() {
       const z1 = w.y1 / ppm / 1000;
       const x2 = w.x2 / ppm / 1000;
       const z2 = w.y2 / ppm / 1000;
-      return { id: w.id, x1, z1, x2, z2, isFixed: w.tool === 'wall_fixed', color: w.color };
+      return { id: w.id, x1, z1, x2, z2, isFixed: w.tool === 'wall_fixed', color: w.color, tool: w.tool };
     });
   }, [walls, calibration]);
 
@@ -105,11 +125,12 @@ export function RoomScene() {
   return (
     <CanvasWrapper>
       <Canvas
-        camera={{ fov: 75, near: 0.05, far: 500, position: [0, 1.6, 0] }}
+        camera={{ fov: 75, near: 0.05, far: 500, position: [0, EYE_HEIGHT, 0] }}
         shadows
         gl={{ antialias: true }}
         style={{ background: '#1a1a2e' }}
       >
+        <CameraInitializer />
         <Sky sunPosition={[100, 100, 100]} />
         <ambientLight intensity={0.6} />
         <directionalLight position={[5, 8, 5]} intensity={1} castShadow />

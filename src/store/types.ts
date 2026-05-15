@@ -81,10 +81,12 @@ export interface AppState {
   viewSettings: ViewSettings;
   history: HistoryAction[];
   measurements: MeasurementLine[];
+  tourAnchor: Point | null;
   activeToolType: ToolType;
   activeColor: GrayShade;
   // transient UI state (not persisted)
   pendingCalibrationLine: LineElement | null;
   pendingAreaPolygon: Point[];
   highlightedElementId: string | null;
+  isSettingAnchor: boolean;
 }
