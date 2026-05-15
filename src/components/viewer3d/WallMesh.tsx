@@ -26,7 +26,7 @@ export function WallMesh({ wall, height }: Props) {
   const cz = (wall.z1 + wall.z2) / 2;
   const angle = Math.atan2(dz, dx);
 
-  const wallColor = wall.isFixed ? '#2a2a2a' : '#4a4a4a';
+  const wallColor = '#d0d0d0';
 
   return (
     <mesh

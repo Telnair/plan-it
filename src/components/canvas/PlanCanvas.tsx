@@ -183,7 +183,12 @@ export function PlanCanvas({ stageRef }: Props) {
           )}
         </Layer>
 
-        <BackgroundLayer src={store.backgroundImage} canvasWidth={size.w} canvasHeight={size.h} />
+        <BackgroundLayer
+          src={store.backgroundImage}
+          canvasWidth={size.w}
+          canvasHeight={size.h}
+          opacity={store.viewSettings.backgroundImageOpacity}
+        />
 
         <AreaLayer />
 

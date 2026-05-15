@@ -48,6 +48,16 @@ export interface Area {
 export interface ViewSettings {
   showMovableWalls: boolean;
   movableWallsOpacity: number;
+  backgroundImageOpacity: number;
+}
+
+export interface HistoryAction {
+  id: string;
+  elementId: string;
+  elementType: 'wall' | 'window' | 'door' | 'area';
+  label: string;
+  toolType: ToolType;
+  timestamp: number;
 }
 
 export interface AppState {
@@ -59,9 +69,11 @@ export interface AppState {
   areas: Area[];
   calibration: Calibration | null;
   viewSettings: ViewSettings;
+  history: HistoryAction[];
   activeToolType: ToolType;
   activeColor: GrayShade;
   // transient UI state (not persisted)
   pendingCalibrationLine: LineElement | null;
   pendingAreaPolygon: Point[];
+  highlightedElementId: string | null;
 }

@@ -9,11 +9,13 @@ import { PlanCanvas } from './components/canvas/PlanCanvas';
 import { RoomScene } from './components/viewer3d/RoomScene';
 import { ExportDialog } from './components/dialogs/ExportDialog';
 import { useAppStore } from './store/appStore';
+import { useUndoShortcut } from './hooks/useUndoShortcut';
 
 export default function App() {
   const stageRef = useRef<Konva.Stage | null>(null);
   const [exportOpen, setExportOpen] = useState(false);
   const mode = useAppStore((s) => s.mode);
+  useUndoShortcut();
 
   return (
     <ThemeProvider theme={muiTheme}>

@@ -53,7 +53,8 @@ export function DrawingLayer({ drawStart, drawEnd, areaPolygon }: Props) {
           stroke={activeColor}
           strokeWidth={def.strokeWidth}
           dash={def.dashEnabled ? def.dash : undefined}
-          lineCap="round"
+          lineCap="butt"
+          lineJoin="miter"
           opacity={0.7}
         />
       )}

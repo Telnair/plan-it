@@ -14,6 +14,7 @@ import ImageIcon from '@mui/icons-material/Image';
 import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined';
 import { useAppStore } from '../../store/appStore';
 import { ToolPanel } from '../tools/ToolPanel';
+import { HistoryPanel } from './HistoryPanel';
 import { selectFixedWalls, selectMovableWalls, selectTotalArea } from '../../store/selectors';
 
 const SidebarWrapper = styled.aside`
@@ -39,7 +40,7 @@ export function Sidebar() {
   const movableWalls = selectMovableWalls(store);
   const totalArea = selectTotalArea(store);
 
-  function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+      function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
@@ -67,16 +68,31 @@ export function Sidebar() {
             {store.backgroundImage ? 'Change Image' : 'Upload Plan Image'}
           </Button>
           {store.backgroundImage && (
-            <Button
-              size="small"
-              startIcon={<DeleteOutlinedIcon />}
-              onClick={() => store.setBackgroundImage(null)}
-              color="error"
-              fullWidth
-              sx={{ fontSize: '0.75rem' }}
-            >
-              Remove Image
-            </Button>
+            <>
+              <Box>
+                <Typography variant="body2" sx={{ color: '#b0bec5', mb: 0.5 }}>
+                  Opacity
+                </Typography>
+                <Slider
+                  size="small"
+                  value={store.viewSettings.backgroundImageOpacity * 100}
+                  onChange={(_, v) =>
+                    store.setViewSettings({ backgroundImageOpacity: (v as number) / 100 })
+                  }
+                  sx={{ color: '#4fc3f7' }}
+                />
+              </Box>
+              <Button
+                size="small"
+                startIcon={<DeleteOutlinedIcon />}
+                onClick={() => store.setBackgroundImage(null)}
+                color="error"
+                fullWidth
+                sx={{ fontSize: '0.75rem' }}
+              >
+                Remove Image
+              </Button>
+            </>
           )}
           <input
             ref={fileInputRef}
@@ -213,6 +229,14 @@ export function Sidebar() {
           </Section>
         </>
       )}
+
+      <Divider sx={{ borderColor: 'rgba(255,255,255,0.08)' }} />
+      <Section>
+        <Typography variant="caption" sx={{ color: '#6b6b6b', display: 'block', mb: 1 }}>
+          HISTORY
+        </Typography>
+        <HistoryPanel />
+      </Section>
     </SidebarWrapper>
   );
 }

@@ -4,39 +4,77 @@ import { useAppStore } from '../../store/appStore';
 import { getToolDef } from '../tools/TOOLS';
 
 interface Props {
-  onDeleteElement?: (type: 'wall' | 'window' | 'door', id: string) => void;
   onUpdateDoor?: (id: string, angleDeg: number) => void;
 }
 
-function WallLine({ el, opacity = 1 }: { el: LineElement; opacity?: number }) {
+function WallLine({
+  el,
+  opacity = 1,
+  highlighted = false,
+}: {
+  el: LineElement;
+  opacity?: number;
+  highlighted?: boolean;
+}) {
   const def = getToolDef(el.tool);
   return (
-    <Line
-      points={[el.x1, el.y1, el.x2, el.y2]}
-      stroke={el.color}
-      strokeWidth={def.strokeWidth}
-      dash={def.dashEnabled ? def.dash : undefined}
-      lineCap="round"
-      opacity={opacity}
-    />
+    <Group opacity={opacity}>
+      {/* Highlight glow rendered behind the main stroke */}
+      {highlighted && (
+        <Line
+          points={[el.x1, el.y1, el.x2, el.y2]}
+          stroke="#4fc3f7"
+          strokeWidth={def.strokeWidth + 10}
+          lineCap="butt"
+          lineJoin="miter"
+          opacity={0.4}
+          listening={false}
+        />
+      )}
+      <Line
+        points={[el.x1, el.y1, el.x2, el.y2]}
+        stroke={el.color}
+        strokeWidth={def.strokeWidth}
+        dash={def.dashEnabled ? def.dash : undefined}
+        lineCap="butt"
+        lineJoin="miter"
+      />
+    </Group>
   );
 }
 
-function DoorShape({ door, onUpdateDoor }: { door: DoorElement; onUpdateDoor?: (id: string, angle: number) => void }) {
+function DoorShape({
+  door,
+  highlighted = false,
+  onUpdateDoor,
+}: {
+  door: DoorElement;
+  highlighted?: boolean;
+  onUpdateDoor?: (id: string, angle: number) => void;
+}) {
   const dx = door.x2 - door.x1;
   const dy = door.y2 - door.y1;
   const length = Math.sqrt(dx * dx + dy * dy);
   const baseAngle = (Math.atan2(dy, dx) * 180) / Math.PI;
-  const arcStartAngle = baseAngle;
   const arcAngle = door.openingDirection * door.openingAngleDeg;
 
   return (
     <Group>
+      {highlighted && (
+        <Line
+          points={[door.x1, door.y1, door.x2, door.y2]}
+          stroke="#4fc3f7"
+          strokeWidth={12}
+          lineCap="butt"
+          opacity={0.4}
+          listening={false}
+        />
+      )}
       <Line
         points={[door.x1, door.y1, door.x2, door.y2]}
         stroke={door.color}
         strokeWidth={2}
-        lineCap="round"
+        lineCap="butt"
       />
       <Arc
         x={door.x1}
@@ -44,23 +82,16 @@ function DoorShape({ door, onUpdateDoor }: { door: DoorElement; onUpdateDoor?: (
         innerRadius={0}
         outerRadius={length}
         angle={Math.abs(arcAngle)}
-        rotation={arcAngle >= 0 ? arcStartAngle : arcStartAngle + arcAngle}
+        rotation={arcAngle >= 0 ? baseAngle : baseAngle + arcAngle}
         stroke={door.color}
         strokeWidth={1}
         dash={[4, 3]}
         fill="rgba(79,195,247,0.05)"
       />
-      {/* Rotation handle */}
       {onUpdateDoor && (
         <Circle
-          x={
-            door.x1 +
-            length * Math.cos(((arcStartAngle + arcAngle) * Math.PI) / 180)
-          }
-          y={
-            door.y1 +
-            length * Math.sin(((arcStartAngle + arcAngle) * Math.PI) / 180)
-          }
+          x={door.x1 + length * Math.cos(((baseAngle + arcAngle) * Math.PI) / 180)}
+          y={door.y1 + length * Math.sin(((baseAngle + arcAngle) * Math.PI) / 180)}
           radius={6}
           fill="#4fc3f7"
           draggable
@@ -79,7 +110,7 @@ function DoorShape({ door, onUpdateDoor }: { door: DoorElement; onUpdateDoor?: (
 
 export function ElementsLayer({ onUpdateDoor }: Props) {
   const store = useAppStore();
-  const { viewSettings, mode } = store;
+  const { viewSettings, mode, highlightedElementId } = store;
 
   const movableOpacity =
     !viewSettings.showMovableWalls && mode === 'plan'
@@ -88,28 +119,34 @@ export function ElementsLayer({ onUpdateDoor }: Props) {
 
   return (
     <Layer>
-      {/* Fixed walls */}
       {store.walls
         .filter((w) => w.tool === 'wall_fixed')
         .map((w) => (
-          <WallLine key={w.id} el={w} />
+          <WallLine key={w.id} el={w} highlighted={highlightedElementId === w.id} />
         ))}
 
-      {/* Movable walls */}
       {store.walls
         .filter((w) => w.tool === 'wall_movable')
         .map((w) => (
-          <WallLine key={w.id} el={w} opacity={movableOpacity} />
+          <WallLine
+            key={w.id}
+            el={w}
+            opacity={movableOpacity}
+            highlighted={highlightedElementId === w.id}
+          />
         ))}
 
-      {/* Windows */}
       {store.windows.map((w) => (
-        <WallLine key={w.id} el={w} />
+        <WallLine key={w.id} el={w} highlighted={highlightedElementId === w.id} />
       ))}
 
-      {/* Doors */}
       {store.doors.map((d) => (
-        <DoorShape key={d.id} door={d} onUpdateDoor={onUpdateDoor} />
+        <DoorShape
+          key={d.id}
+          door={d}
+          highlighted={highlightedElementId === d.id}
+          onUpdateDoor={onUpdateDoor}
+        />
       ))}
     </Layer>
   );

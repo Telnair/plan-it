@@ -20,15 +20,15 @@ export function FloorMesh({ bounds }: Props) {
 
   return (
     <>
-      {/* Floor */}
+      {/* Floor — warm beige laminate */}
       <mesh position={[cx, 0, cz]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
         <planeGeometry args={[width + padding * 2, depth + padding * 2]} />
-        <meshStandardMaterial color="#e8e4d8" roughness={0.9} />
+        <meshStandardMaterial color="#c4a882" roughness={0.85} metalness={0.02} />
       </mesh>
-      {/* Ceiling */}
+      {/* Ceiling — white */}
       <mesh position={[cx, 2.5, cz]} rotation={[Math.PI / 2, 0, 0]}>
         <planeGeometry args={[width + padding * 2, depth + padding * 2]} />
-        <meshStandardMaterial color="#f5f5f0" roughness={1} side={2} />
+        <meshStandardMaterial color="#ffffff" roughness={1} side={2} />
       </mesh>
     </>
   );

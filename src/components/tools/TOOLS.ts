@@ -1,4 +1,4 @@
-import type { ToolType } from '../../store/types';
+import type { ToolType, GrayShade } from '../../store/types';
 
 export interface ToolDef {
   type: ToolType;
@@ -7,6 +7,7 @@ export interface ToolDef {
   strokeWidth: number;
   dashEnabled: boolean;
   dash?: number[];
+  defaultColor?: GrayShade;
 }
 
 export const TOOL_DEFS: ToolDef[] = [
@@ -14,15 +15,17 @@ export const TOOL_DEFS: ToolDef[] = [
     type: 'wall_fixed',
     label: 'Fixed Wall',
     description: 'Structural wall — cannot be removed',
-    strokeWidth: 8,
+    strokeWidth: 20,
     dashEnabled: false,
+    defaultColor: '#1a1a1a',
   },
   {
     type: 'wall_movable',
     label: 'Movable Wall',
     description: 'Non-structural wall — can be hidden/removed',
-    strokeWidth: 4,
+    strokeWidth: 10,
     dashEnabled: false,
+    defaultColor: '#6b6b6b',
   },
   {
     type: 'window',
@@ -31,6 +34,7 @@ export const TOOL_DEFS: ToolDef[] = [
     strokeWidth: 3,
     dashEnabled: true,
     dash: [6, 4],
+    defaultColor: '#9e9e9e',
   },
   {
     type: 'door',
@@ -38,6 +42,7 @@ export const TOOL_DEFS: ToolDef[] = [
     description: 'Door with opening arc',
     strokeWidth: 2,
     dashEnabled: false,
+    defaultColor: '#3d3d3d',
   },
 ];
 

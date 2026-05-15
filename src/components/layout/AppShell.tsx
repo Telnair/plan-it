@@ -1,10 +1,11 @@
 import styled from 'styled-components';
-import { AppBar, Toolbar, Typography, Button, Tooltip, Box } from '@mui/material';
+import { AppBar, Toolbar, Typography, Button, Tooltip, Box, Divider } from '@mui/material';
 import ViewIn3dIcon from '@mui/icons-material/ViewInAr';
 import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined';
 import EditIcon from '@mui/icons-material/Edit';
 import DownloadIcon from '@mui/icons-material/Download';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
+import UndoIcon from '@mui/icons-material/Undo';
 import { useAppStore } from '../../store/appStore';
 import { Sidebar } from './Sidebar';
 
@@ -43,7 +44,7 @@ const AppTitle = styled(Typography)`
 `;
 
 export function AppShell({ children, onExport }: Props) {
-  const { mode, setMode, resetState } = useAppStore();
+  const { mode, setMode, resetState, undo, canUndo } = useAppStore();
 
   return (
     <Shell>
@@ -90,6 +91,23 @@ export function AppShell({ children, onExport }: Props) {
               </Button>
             </Tooltip>
           </Box>
+
+          <Tooltip title="Undo last action (⌘Z / Ctrl+Z)">
+            <span>
+              <Button
+                size="small"
+                startIcon={<UndoIcon />}
+                onClick={undo}
+                disabled={!canUndo()}
+                color="inherit"
+                sx={{ opacity: canUndo() ? 1 : 0.35 }}
+              >
+                Undo
+              </Button>
+            </span>
+          </Tooltip>
+
+          <Divider orientation="vertical" flexItem sx={{ borderColor: 'rgba(255,255,255,0.1)', mx: 0.5 }} />
 
           <Tooltip title="Export / Import">
             <Button

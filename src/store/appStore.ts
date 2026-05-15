@@ -12,12 +12,19 @@ import type {
   ViewSettings,
   Calibration,
   Point,
+  HistoryAction,
 } from './types';
+import { getToolDef } from '../components/tools/TOOLS';
 
 const STORAGE_KEY = 'plan-it-state';
+const MAX_HISTORY = 50;
 
 type PersistedState = Omit<AppState,
-  'pendingCalibrationLine' | 'pendingAreaPolygon' | 'activeToolType' | 'activeColor'
+  | 'pendingCalibrationLine'
+  | 'pendingAreaPolygon'
+  | 'activeToolType'
+  | 'activeColor'
+  | 'highlightedElementId'
 >;
 
 const DEFAULT_PERSISTED: PersistedState = {
@@ -28,9 +35,11 @@ const DEFAULT_PERSISTED: PersistedState = {
   doors: [],
   areas: [],
   calibration: null,
+  history: [],
   viewSettings: {
     showMovableWalls: true,
     movableWallsOpacity: 1,
+    backgroundImageOpacity: 0.5,
   },
 };
 
@@ -68,6 +77,12 @@ interface AppActions {
 
   setPendingAreaPolygon: (pts: Point[]) => void;
 
+  removeHistoryEntry: (historyId: string) => void;
+  setHighlightedElement: (id: string | null) => void;
+
+  undo: () => void;
+  canUndo: () => boolean;
+
   importState: (state: PersistedState) => void;
   resetState: () => void;
   persist: () => void;
@@ -84,9 +99,25 @@ function persistState(state: Store) {
     doors: state.doors,
     areas: state.areas,
     calibration: state.calibration,
+    history: state.history,
     viewSettings: state.viewSettings,
   };
   storageAdapter.set(STORAGE_KEY, toSave);
+}
+
+function makeHistoryEntry(
+  elementId: string,
+  elementType: HistoryAction['elementType'],
+  label: string,
+  toolType: ToolType
+): HistoryAction {
+  return { id: uuidv4(), elementId, elementType, label, toolType, timestamp: Date.now() };
+}
+
+function cappedHistory(history: HistoryAction[], next: HistoryAction): HistoryAction[] {
+  const updated = [...history, next];
+  if (updated.length > MAX_HISTORY) updated.shift();
+  return updated;
 }
 
 export const useAppStore = create<Store>((set, get) => {
@@ -95,9 +126,10 @@ export const useAppStore = create<Store>((set, get) => {
   return {
     ...persisted,
     activeToolType: 'wall_fixed',
-    activeColor: '#3d3d3d',
+    activeColor: '#1a1a1a',
     pendingCalibrationLine: null,
     pendingAreaPolygon: [],
+    highlightedElementId: null,
 
     setMode: (mode) => {
       set({ mode });
@@ -111,9 +143,13 @@ export const useAppStore = create<Store>((set, get) => {
 
     addWall: (wall) => {
       const newWall = { ...wall, id: uuidv4() };
+      const toolLabel =
+        wall.tool === 'wall_fixed' ? 'Fixed Wall' : 'Movable Wall';
+      const entry = makeHistoryEntry(newWall.id, 'wall', toolLabel, wall.tool);
       const walls = [...get().walls, newWall];
-      set({ walls });
-      persistState({ ...get(), walls });
+      const history = cappedHistory(get().history, entry);
+      set({ walls, history });
+      persistState({ ...get(), walls, history });
     },
 
     removeWall: (id) => {
@@ -130,9 +166,11 @@ export const useAppStore = create<Store>((set, get) => {
 
     addWindow: (win) => {
       const newWin = { ...win, id: uuidv4() };
+      const entry = makeHistoryEntry(newWin.id, 'window', 'Window', 'window');
       const windows = [...get().windows, newWin];
-      set({ windows });
-      persistState({ ...get(), windows });
+      const history = cappedHistory(get().history, entry);
+      set({ windows, history });
+      persistState({ ...get(), windows, history });
     },
 
     removeWindow: (id) => {
@@ -143,9 +181,11 @@ export const useAppStore = create<Store>((set, get) => {
 
     addDoor: (door) => {
       const newDoor = { ...door, id: uuidv4() };
+      const entry = makeHistoryEntry(newDoor.id, 'door', 'Door', 'door');
       const doors = [...get().doors, newDoor];
-      set({ doors });
-      persistState({ ...get(), doors });
+      const history = cappedHistory(get().history, entry);
+      set({ doors, history });
+      persistState({ ...get(), doors, history });
     },
 
     removeDoor: (id) => {
@@ -162,9 +202,11 @@ export const useAppStore = create<Store>((set, get) => {
 
     addArea: (area) => {
       const newArea = { ...area, id: uuidv4() };
+      const entry = makeHistoryEntry(newArea.id, 'area', area.name, 'area_select');
       const areas = [...get().areas, newArea];
-      set({ areas });
-      persistState({ ...get(), areas });
+      const history = cappedHistory(get().history, entry);
+      set({ areas, history });
+      persistState({ ...get(), areas, history });
     },
 
     removeArea: (id) => {
@@ -192,13 +234,52 @@ export const useAppStore = create<Store>((set, get) => {
       persistState({ ...get(), viewSettings });
     },
 
-    setActiveTool: (activeToolType) => set({ activeToolType }),
+    setActiveTool: (activeToolType) => {
+      const def = getToolDef(activeToolType);
+      const activeColor = (def.defaultColor ?? get().activeColor) as GrayShade;
+      set({ activeToolType, activeColor });
+    },
+
     setActiveColor: (activeColor) => set({ activeColor }),
 
     setPendingAreaPolygon: (pendingAreaPolygon) => set({ pendingAreaPolygon }),
 
+    removeHistoryEntry: (historyId) => {
+      const entry = get().history.find((h) => h.id === historyId);
+      if (!entry) return;
+
+      // Remove the associated element
+      if (entry.elementType === 'wall') get().removeWall(entry.elementId);
+      else if (entry.elementType === 'window') get().removeWindow(entry.elementId);
+      else if (entry.elementType === 'door') get().removeDoor(entry.elementId);
+      else if (entry.elementType === 'area') get().removeArea(entry.elementId);
+
+      const history = get().history.filter((h) => h.id !== historyId);
+      // Also clear highlight if it was on this element
+      const highlightedElementId =
+        get().highlightedElementId === entry.elementId ? null : get().highlightedElementId;
+      set({ history, highlightedElementId });
+      persistState({ ...get(), history });
+    },
+
+    setHighlightedElement: (highlightedElementId) => set({ highlightedElementId }),
+
+    canUndo: () => get().history.length > 0,
+
+    undo: () => {
+      const history = get().history;
+      if (history.length === 0) return;
+      const last = history[history.length - 1];
+      get().removeHistoryEntry(last.id);
+    },
+
     importState: (state) => {
-      set({ ...state, pendingCalibrationLine: null, pendingAreaPolygon: [] });
+      set({
+        ...state,
+        pendingCalibrationLine: null,
+        pendingAreaPolygon: [],
+        highlightedElementId: null,
+      });
       storageAdapter.set(STORAGE_KEY, state);
     },
 
@@ -207,9 +288,10 @@ export const useAppStore = create<Store>((set, get) => {
       set({
         ...DEFAULT_PERSISTED,
         activeToolType: 'wall_fixed',
-        activeColor: '#3d3d3d',
+        activeColor: '#1a1a1a',
         pendingCalibrationLine: null,
         pendingAreaPolygon: [],
+        highlightedElementId: null,
       });
     },
 

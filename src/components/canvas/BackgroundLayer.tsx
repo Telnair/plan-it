@@ -5,9 +5,10 @@ interface Props {
   src: string | null;
   canvasWidth: number;
   canvasHeight: number;
+  opacity?: number;
 }
 
-export function BackgroundLayer({ src, canvasWidth, canvasHeight }: Props) {
+export function BackgroundLayer({ src, canvasWidth, canvasHeight, opacity = 0.5 }: Props) {
   const [img, setImg] = useState<HTMLImageElement | null>(null);
 
   useEffect(() => {
@@ -33,7 +34,7 @@ export function BackgroundLayer({ src, canvasWidth, canvasHeight }: Props) {
         y={y}
         width={img.width * scale}
         height={img.height * scale}
-        opacity={0.5}
+        opacity={opacity}
       />
     </Layer>
   );
