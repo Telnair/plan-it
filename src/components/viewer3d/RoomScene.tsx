@@ -48,6 +48,12 @@ const HUD = styled.div`
 const WALL_HEIGHT = 2.5; // metres
 const EYE_HEIGHT = 1.6; // metres
 
+const TOOL_STROKE_PX: Record<string, number> = {
+  wall_fixed: 20,
+  wall_movable: 10,
+  wall_canal: 40,
+};
+
 function CameraInitializer() {
   const { tourAnchor, calibration } = useAppStore();
   const { camera } = useThree();
@@ -91,7 +97,8 @@ export function RoomScene() {
       const z1 = w.y1 / ppm / 1000;
       const x2 = w.x2 / ppm / 1000;
       const z2 = w.y2 / ppm / 1000;
-      return { id: w.id, x1, z1, x2, z2, isFixed: w.tool === 'wall_fixed', color: w.color, tool: w.tool };
+      const thickness = (TOOL_STROKE_PX[w.tool] ?? 15) / ppm / 1000;
+      return { id: w.id, x1, z1, x2, z2, isFixed: w.tool === 'wall_fixed', color: w.color, tool: w.tool, thickness };
     });
   }, [walls, calibration]);
 
