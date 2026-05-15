@@ -9,7 +9,9 @@ function centroid(pts: Point[]): Point {
 }
 
 export function AreaLayer() {
-  const { areas } = useAppStore();
+  const { areas, viewSettings } = useAppStore();
+
+  if (!viewSettings.showAreas) return <Layer listening={false} />;
 
   return (
     <Layer listening={false}>

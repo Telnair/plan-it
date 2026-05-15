@@ -4,7 +4,7 @@ import { useAppStore } from '../../store/appStore';
 import { getToolDef } from '../tools/TOOLS';
 
 interface Props {
-  onUpdateDoor?: (id: string, angleDeg: number) => void;
+  onUpdateDoor?: (id: string, partial: Partial<import('../../store/types').DoorElement>) => void;
 }
 
 function WallLine({
@@ -52,7 +52,7 @@ function CanalWallShape({
   highlighted?: boolean;
 }) {
   const half = 20; // half of 40px thickness
-  const borderWidth = 2;
+  const borderWidth = 8;
 
   return (
     <Group>
@@ -112,13 +112,27 @@ function DoorShape({
 }: {
   door: DoorElement;
   highlighted?: boolean;
-  onUpdateDoor?: (id: string, angle: number) => void;
+  onUpdateDoor?: (id: string, partial: Partial<DoorElement>) => void;
 }) {
-  const dx = door.x2 - door.x1;
-  const dy = door.y2 - door.y1;
+  // Determine hinge vs tip based on hingeFlipped flag
+  const hx = door.hingeFlipped ? door.x2 : door.x1;
+  const hy = door.hingeFlipped ? door.y2 : door.y1;
+  const tx = door.hingeFlipped ? door.x1 : door.x2;
+  const ty = door.hingeFlipped ? door.y1 : door.y2;
+
+  const dx = tx - hx;
+  const dy = ty - hy;
   const length = Math.sqrt(dx * dx + dy * dy);
   const baseAngle = (Math.atan2(dy, dx) * 180) / Math.PI;
   const arcAngle = door.openingDirection * door.openingAngleDeg;
+
+  // Position of the draggable arc-end handle
+  const handleX = hx + length * Math.cos(((baseAngle + arcAngle) * Math.PI) / 180);
+  const handleY = hy + length * Math.sin(((baseAngle + arcAngle) * Math.PI) / 180);
+
+  // Midpoint of the door segment — anchor for the "flip direction" button
+  const midX = (door.x1 + door.x2) / 2;
+  const midY = (door.y1 + door.y2) / 2;
 
   return (
     <Group>
@@ -139,8 +153,8 @@ function DoorShape({
         lineCap="butt"
       />
       <Arc
-        x={door.x1}
-        y={door.y1}
+        x={hx}
+        y={hy}
         innerRadius={0}
         outerRadius={length}
         angle={Math.abs(arcAngle)}
@@ -150,21 +164,67 @@ function DoorShape({
         dash={[4, 3]}
         fill="rgba(79,195,247,0.05)"
       />
+
+      {/* Angle drag handle */}
       {onUpdateDoor && (
         <Circle
-          x={door.x1 + length * Math.cos(((baseAngle + arcAngle) * Math.PI) / 180)}
-          y={door.y1 + length * Math.sin(((baseAngle + arcAngle) * Math.PI) / 180)}
+          x={handleX}
+          y={handleY}
           radius={6}
           fill="#4fc3f7"
           draggable
           onDragMove={(e) => {
-            const px = e.target.x() - door.x1;
-            const py = e.target.y() - door.y1;
+            const px = e.target.x() - hx;
+            const py = e.target.y() - hy;
             let newAngle = (Math.atan2(py, px) * 180) / Math.PI - baseAngle;
             newAngle = Math.max(-180, Math.min(180, newAngle));
-            onUpdateDoor(door.id, Math.abs(newAngle));
+            onUpdateDoor(door.id, { openingAngleDeg: Math.abs(newAngle) });
           }}
         />
+      )}
+
+      {/* Flip direction button — shown when highlighted */}
+      {highlighted && onUpdateDoor && (
+        <Group
+          x={midX}
+          y={midY - 18}
+          onClick={() => onUpdateDoor(door.id, { openingDirection: door.openingDirection === 1 ? -1 : 1 })}
+          onTap={() => onUpdateDoor(door.id, { openingDirection: door.openingDirection === 1 ? -1 : 1 })}
+        >
+          <Circle radius={10} fill="#1e1e1e" stroke="#4fc3f7" strokeWidth={1.5} />
+          <Line
+            points={[-4, 2, 0, -3, 4, 2]}
+            stroke="#4fc3f7"
+            strokeWidth={1.5}
+            lineCap="round"
+            lineJoin="round"
+          />
+        </Group>
+      )}
+
+      {/* Flip hinge button — shown at non-hinge end when highlighted */}
+      {highlighted && onUpdateDoor && (
+        <Group
+          x={tx}
+          y={ty}
+          onClick={() => onUpdateDoor(door.id, { hingeFlipped: !door.hingeFlipped })}
+          onTap={() => onUpdateDoor(door.id, { hingeFlipped: !door.hingeFlipped })}
+        >
+          <Circle radius={9} fill="#1e1e1e" stroke="#ffb74d" strokeWidth={1.5} />
+          <Line
+            points={[-4, 0, 4, 0]}
+            stroke="#ffb74d"
+            strokeWidth={1.5}
+            lineCap="round"
+          />
+          <Line
+            points={[2, -3, 4, 0, 2, 3]}
+            stroke="#ffb74d"
+            strokeWidth={1.5}
+            lineCap="round"
+            lineJoin="round"
+          />
+        </Group>
       )}
     </Group>
   );
@@ -172,30 +232,20 @@ function DoorShape({
 
 export function ElementsLayer({ onUpdateDoor }: Props) {
   const store = useAppStore();
-  const { viewSettings, mode, highlightedElementId } = store;
-
-  const movableOpacity =
-    !viewSettings.showMovableWalls && mode === 'plan'
-      ? 0
-      : viewSettings.movableWallsOpacity;
+  const { highlightedElementId } = store;
 
   return (
     <Layer>
       {store.walls
-        .filter((w) => w.tool === 'wall_fixed')
+        .filter((w) => w.tool === 'wall_movable')
         .map((w) => (
           <WallLine key={w.id} el={w} highlighted={highlightedElementId === w.id} />
         ))}
 
       {store.walls
-        .filter((w) => w.tool === 'wall_movable')
+        .filter((w) => w.tool === 'wall_fixed')
         .map((w) => (
-          <WallLine
-            key={w.id}
-            el={w}
-            opacity={movableOpacity}
-            highlighted={highlightedElementId === w.id}
-          />
+          <WallLine key={w.id} el={w} highlighted={highlightedElementId === w.id} />
         ))}
 
       {store.walls

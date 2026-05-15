@@ -10,7 +10,7 @@ export const GRAY_SHADES: GrayShade[] = [
   '#c8c8c8',
 ];
 
-export type AppMode = 'draw' | 'plan' | 'tour3d';
+export type AppMode = 'draw' | 'tour3d';
 
 export interface Point {
   x: number;
@@ -35,6 +35,7 @@ export interface DoorElement extends LineElement {
   tool: 'door';
   openingAngleDeg: number;
   openingDirection: 1 | -1;
+  hingeFlipped?: boolean;
 }
 
 export interface Area {
@@ -46,9 +47,10 @@ export interface Area {
 }
 
 export interface ViewSettings {
-  showMovableWalls: boolean;
-  movableWallsOpacity: number;
+  showMeasurements: boolean;
+  showAreas: boolean;
   backgroundImageOpacity: number;
+  backgroundImageScale: number;
 }
 
 export interface HistoryAction {

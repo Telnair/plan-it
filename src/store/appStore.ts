@@ -39,9 +39,10 @@ const DEFAULT_PERSISTED: PersistedState = {
   calibration: null,
   history: [],
   viewSettings: {
-    showMovableWalls: true,
-    movableWallsOpacity: 1,
+    showMeasurements: true,
+    showAreas: true,
     backgroundImageOpacity: 0.5,
+    backgroundImageScale: 1,
   },
 };
 

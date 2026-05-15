@@ -147,6 +147,9 @@ function MeasureLine({ m }: { m: MeasurementLine }) {
 
 export function MeasurementLayer() {
   const measurements = useAppStore((s) => s.measurements);
+  const showMeasurements = useAppStore((s) => s.viewSettings.showMeasurements);
+
+  if (!showMeasurements) return <Layer />;
 
   return (
     <Layer>

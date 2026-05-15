@@ -144,7 +144,7 @@ export function PlanCanvas({ stageRef }: Props) {
     } else if (line.tool === 'window') {
       store.addWindow(line);
     } else if (line.tool === 'door') {
-      store.addDoor({ ...line, tool: 'door', openingAngleDeg: 90, openingDirection: 1 });
+      store.addDoor({ ...line, tool: 'door', openingAngleDeg: 90, openingDirection: 1, hingeFlipped: false });
     }
   }
 
@@ -191,12 +191,13 @@ export function PlanCanvas({ stageRef }: Props) {
           canvasWidth={size.w}
           canvasHeight={size.h}
           opacity={store.viewSettings.backgroundImageOpacity}
+          sizeScale={store.viewSettings.backgroundImageScale}
         />
 
         <AreaLayer />
 
         <ElementsLayer
-          onUpdateDoor={(id, angle) => store.updateDoor(id, { openingAngleDeg: angle })}
+          onUpdateDoor={(id, partial) => store.updateDoor(id, partial)}
         />
 
         <DrawingLayer

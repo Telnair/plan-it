@@ -87,6 +87,21 @@ export function Sidebar() {
                   sx={{ color: '#4fc3f7' }}
                 />
               </Box>
+              <Box>
+                <Typography variant="body2" sx={{ color: '#b0bec5', mb: 0.5 }}>
+                  Size
+                </Typography>
+                <Slider
+                  size="small"
+                  min={50}
+                  max={200}
+                  value={store.viewSettings.backgroundImageScale * 100}
+                  onChange={(_, v) =>
+                    store.setViewSettings({ backgroundImageScale: (v as number) / 100 })
+                  }
+                  sx={{ color: '#4fc3f7' }}
+                />
+              </Box>
               <Button
                 size="small"
                 startIcon={<DeleteOutlinedIcon />}
@@ -115,41 +130,34 @@ export function Sidebar() {
         <ToolPanel />
       </Section>
 
-      {store.mode === 'plan' && (
-        <>
-          <Divider sx={{ borderColor: 'rgba(255,255,255,0.08)' }} />
-          <Section>
-            <Typography variant="caption" sx={{ color: '#6b6b6b', display: 'block', mb: 1 }}>
-              WALL VISIBILITY
-            </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Typography variant="body2" sx={{ color: '#b0bec5' }}>
-                Show movable
-              </Typography>
-              <Switch
-                size="small"
-                checked={store.viewSettings.showMovableWalls}
-                onChange={(e) => store.setViewSettings({ showMovableWalls: e.target.checked })}
-                color="primary"
-              />
-            </Box>
-            <Box sx={{ mt: 1 }}>
-              <Typography variant="body2" sx={{ color: '#b0bec5', mb: 0.5 }}>
-                Opacity
-              </Typography>
-              <Slider
-                size="small"
-                value={store.viewSettings.movableWallsOpacity * 100}
-                onChange={(_, v) =>
-                  store.setViewSettings({ movableWallsOpacity: (v as number) / 100 })
-                }
-                disabled={!store.viewSettings.showMovableWalls}
-                sx={{ color: '#4fc3f7' }}
-              />
-            </Box>
-          </Section>
-        </>
-      )}
+      <Divider sx={{ borderColor: 'rgba(255,255,255,0.08)' }} />
+      <Section>
+        <Typography variant="caption" sx={{ color: '#6b6b6b', display: 'block', mb: 1 }}>
+          VISIBILITY
+        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Typography variant="body2" sx={{ color: '#b0bec5' }}>
+            Show areas
+          </Typography>
+          <Switch
+            size="small"
+            checked={store.viewSettings.showAreas}
+            onChange={(e) => store.setViewSettings({ showAreas: e.target.checked })}
+            color="primary"
+          />
+        </Box>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 0.5 }}>
+          <Typography variant="body2" sx={{ color: '#b0bec5' }}>
+            Show measurements
+          </Typography>
+          <Switch
+            size="small"
+            checked={store.viewSettings.showMeasurements}
+            onChange={(e) => store.setViewSettings({ showMeasurements: e.target.checked })}
+            color="primary"
+          />
+        </Box>
+      </Section>
 
       <Divider sx={{ borderColor: 'rgba(255,255,255,0.08)' }} />
 

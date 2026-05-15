@@ -1,9 +1,8 @@
 import styled from 'styled-components';
-import { Tooltip, Typography, Divider } from '@mui/material';
+import { Tooltip, Typography } from '@mui/material';
 import { useAppStore } from '../../store/appStore';
 import { TOOL_DEFS, AREA_SELECT_TOOL, MEASURE_TOOL } from './TOOLS';
-import type { ToolType, GrayShade } from '../../store/types';
-import { GRAY_SHADES } from '../../store/types';
+import type { ToolType } from '../../store/types';
 
 const Panel = styled.div`
   display: flex;
@@ -44,43 +43,17 @@ const LinePreview = styled.div<{ $width: number; $dashed: boolean; $color: strin
       : ''}
 `;
 
-const ColorPalette = styled.div`
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-  padding: 4px 0;
-`;
-
-const ColorSwatch = styled.button<{ $color: string; $active: boolean }>`
-  width: 26px;
-  height: 26px;
-  border-radius: 6px;
-  border: 2px solid ${(p) => (p.$active ? '#4fc3f7' : 'transparent')};
-  background: ${(p) => p.$color};
-  cursor: pointer;
-  transition: transform 0.1s;
-
-  &:hover {
-    transform: scale(1.15);
-  }
-`;
+const ALL_TOOLS = [...TOOL_DEFS, AREA_SELECT_TOOL, MEASURE_TOOL];
 
 export function ToolPanel() {
-  const { activeToolType, activeColor, setActiveTool, setActiveColor, mode } = useAppStore();
-  const showAreaTool = mode === 'plan';
-
-  const tools = [
-    ...TOOL_DEFS,
-    ...(showAreaTool ? [AREA_SELECT_TOOL] : []),
-    MEASURE_TOOL,
-  ];
+  const { activeToolType, setActiveTool } = useAppStore();
 
   return (
     <Panel>
       <Typography variant="caption" sx={{ color: '#6b6b6b', mb: 0.5, px: 0.5 }}>
         TOOLS
       </Typography>
-      {tools.map((tool) => (
+      {ALL_TOOLS.map((tool) => (
         <Tooltip key={tool.type} title={tool.description} placement="right">
           <ToolBtn
             $active={activeToolType === tool.type}
@@ -95,23 +68,6 @@ export function ToolPanel() {
           </ToolBtn>
         </Tooltip>
       ))}
-
-      <Divider sx={{ my: 1, borderColor: 'rgba(255,255,255,0.08)' }} />
-
-      <Typography variant="caption" sx={{ color: '#6b6b6b', mb: 0.5, px: 0.5 }}>
-        COLOR
-      </Typography>
-      <ColorPalette>
-        {GRAY_SHADES.map((shade) => (
-          <Tooltip key={shade} title={shade} placement="right">
-            <ColorSwatch
-              $color={shade}
-              $active={activeColor === shade}
-              onClick={() => setActiveColor(shade as GrayShade)}
-            />
-          </Tooltip>
-        ))}
-      </ColorPalette>
     </Panel>
   );
 }

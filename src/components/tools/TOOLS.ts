@@ -25,7 +25,7 @@ export const TOOL_DEFS: ToolDef[] = [
     description: 'Non-structural wall — can be hidden/removed',
     strokeWidth: 10,
     dashEnabled: false,
-    defaultColor: '#6b6b6b',
+    defaultColor: '#9e9e9e',
   },
   {
     type: 'wall_canal',

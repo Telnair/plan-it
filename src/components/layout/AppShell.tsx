@@ -1,7 +1,6 @@
 import styled from 'styled-components';
 import { AppBar, Toolbar, Typography, Button, Tooltip, Box, Divider } from '@mui/material';
 import ViewIn3dIcon from '@mui/icons-material/ViewInAr';
-import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined';
 import EditIcon from '@mui/icons-material/Edit';
 import DownloadIcon from '@mui/icons-material/Download';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
@@ -64,18 +63,6 @@ export function AppShell({ children, onExport }: Props) {
                 color={mode === 'draw' ? 'primary' : 'inherit'}
               >
                 Draw
-              </Button>
-            </Tooltip>
-
-            <Tooltip title="Edit the plan — manage wall visibility and areas">
-              <Button
-                size="small"
-                variant={mode === 'plan' ? 'contained' : 'text'}
-                startIcon={<CheckCircleOutlinedIcon />}
-                onClick={() => setMode('plan')}
-                color={mode === 'plan' ? 'primary' : 'inherit'}
-              >
-                Plan
               </Button>
             </Tooltip>
 

@@ -6,9 +6,10 @@ interface Props {
   canvasWidth: number;
   canvasHeight: number;
   opacity?: number;
+  sizeScale?: number;
 }
 
-export function BackgroundLayer({ src, canvasWidth, canvasHeight, opacity = 0.5 }: Props) {
+export function BackgroundLayer({ src, canvasWidth, canvasHeight, opacity = 0.5, sizeScale = 1 }: Props) {
   const [img, setImg] = useState<HTMLImageElement | null>(null);
 
   useEffect(() => {
@@ -22,9 +23,9 @@ export function BackgroundLayer({ src, canvasWidth, canvasHeight, opacity = 0.5 
 
   const scaleX = canvasWidth / img.width;
   const scaleY = canvasHeight / img.height;
-  const scale = Math.min(scaleX, scaleY);
-  const x = (canvasWidth - img.width * scale) / 2;
-  const y = (canvasHeight - img.height * scale) / 2;
+  const fitScale = Math.min(scaleX, scaleY) * sizeScale;
+  const x = (canvasWidth - img.width * fitScale) / 2;
+  const y = (canvasHeight - img.height * fitScale) / 2;
 
   return (
     <Layer listening={false}>
@@ -32,8 +33,8 @@ export function BackgroundLayer({ src, canvasWidth, canvasHeight, opacity = 0.5 
         image={img}
         x={x}
         y={y}
-        width={img.width * scale}
-        height={img.height * scale}
+        width={img.width * fitScale}
+        height={img.height * fitScale}
         opacity={opacity}
       />
     </Layer>

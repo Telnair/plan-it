@@ -58,7 +58,7 @@ const TimeText = styled(Typography)`
 
 const TOOL_ICON_PROPS: Record<string, { width: number; dashed: boolean; color: string }> = {
   wall_fixed:   { width: 5, dashed: false, color: '#1a1a1a' },
-  wall_movable: { width: 3, dashed: false, color: '#6b6b6b' },
+  wall_movable: { width: 3, dashed: false, color: '#9e9e9e' },
   wall_canal:   { width: 5, dashed: false, color: '#1a1a1a' },
   window:       { width: 2, dashed: true,  color: '#9e9e9e' },
   door:         { width: 2, dashed: false, color: '#3d3d3d' },
