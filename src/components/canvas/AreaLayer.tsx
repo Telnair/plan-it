@@ -36,7 +36,7 @@ export function AreaLayer() {
               text={area.name}
               fontSize={12}
               fontStyle="bold"
-              fill="#e0e0e0"
+              fill="#333"
               align="center"
             />
             <Text
@@ -45,7 +45,7 @@ export function AreaLayer() {
               width={120}
               text={`${area.sqMeters.toFixed(1)} m²`}
               fontSize={11}
-              fill="#4fc3f7"
+              fill="#333"
               align="center"
             />
           </Group>

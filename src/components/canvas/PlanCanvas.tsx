@@ -12,7 +12,7 @@ import { CalibrationDialog } from '../dialogs/CalibrationDialog';
 import { AreaNameDialog } from '../dialogs/AreaNameDialog';
 import { FurnitureNameDialog } from '../dialogs/FurnitureNameDialog';
 import { snapTo45 } from '../../utils/geometry';
-import type { Point, GrayShade, ToolType, LineElement } from '../../store/types';
+import type { Point, GrayShade, ToolType } from '../../store/types';
 import styled from 'styled-components';
 
 const CanvasContainer = styled.div<{ $hideNativeCursor: boolean }>`
