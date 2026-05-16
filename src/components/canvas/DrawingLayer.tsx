@@ -1,9 +1,10 @@
-import { Layer, Line, Circle, Text, Rect } from 'react-konva';
+import { Layer, Line, Circle, Text, Rect, Group } from 'react-konva';
 import type { Point } from '../../store/types';
 import { useAppStore } from '../../store/appStore';
 import { getToolDef } from '../tools/TOOLS';
 import { MeasurementHUD } from './MeasurementHUD';
 import { dist } from '../../utils/geometry';
+import { lineLengthMm, formatMm } from '../../utils/measurement';
 
 interface Props {
   drawStart: Point | null;
@@ -57,15 +58,37 @@ export function DrawingLayer({ drawStart, drawEnd, areaPolygon, furniturePolygon
       {furniturePolygon.length > 0 &&
         furniturePolygon.map((pt, i) => {
           const next = furniturePolygon[i + 1];
-          return next ? (
-            <Line
-              key={`fp-seg-${i}`}
-              points={[pt.x, pt.y, next.x, next.y]}
-              stroke="#ffb74d"
-              strokeWidth={1.5}
-              dash={[5, 3]}
-            />
-          ) : null;
+          if (!next) return null;
+          const mx = (pt.x + next.x) / 2;
+          const my = (pt.y + next.y) / 2;
+          return (
+            <Group key={`fp-seg-${i}`}>
+              <Line
+                points={[pt.x, pt.y, next.x, next.y]}
+                stroke="#ffb74d"
+                strokeWidth={1.5}
+                dash={[5, 3]}
+              />
+              {calibration ? (() => {
+                const label = formatMm(lineLengthMm(pt, next, calibration.pixelsPerMm));
+                const w = label.length * 8 + 16;
+                return (
+                  <Group>
+                    <Rect x={mx - w / 2} y={my - 12} width={w} height={20} fill="rgba(30,30,30,0.85)" cornerRadius={4} />
+                    <Text x={mx - w / 2} y={my - 10} width={w} text={label} fontSize={11} fill="#ffb74d" fontStyle="bold" align="center" />
+                  </Group>
+                );
+              })() : (
+                <Text
+                  x={mx + 6}
+                  y={my - 8}
+                  text={`${Math.round(dist(pt, next))} px`}
+                  fontSize={11}
+                  fill="#9e9e9e"
+                />
+              )}
+            </Group>
+          );
         })}
       {furniturePolygon.length > 0 && drawEnd && (
         <Line
@@ -73,6 +96,22 @@ export function DrawingLayer({ drawStart, drawEnd, areaPolygon, furniturePolygon
           stroke="#ffb74d"
           strokeWidth={1.5}
           dash={[5, 3]}
+        />
+      )}
+      {furniturePolygon.length > 0 && drawEnd && calibration && (
+        <MeasurementHUD
+          start={furniturePolygon[furniturePolygon.length - 1]}
+          end={drawEnd}
+          pixelsPerMm={calibration.pixelsPerMm}
+        />
+      )}
+      {furniturePolygon.length > 0 && drawEnd && !calibration && (
+        <Text
+          x={drawEnd.x + 10}
+          y={drawEnd.y - 8}
+          text={`${Math.round(dist(furniturePolygon[furniturePolygon.length - 1], drawEnd))} px`}
+          fontSize={11}
+          fill="#9e9e9e"
         />
       )}
       {furniturePolygon.map((pt, i) => (

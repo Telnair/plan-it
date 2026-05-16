@@ -13,8 +13,9 @@ function centroid(pts: { x: number; y: number }[]) {
 }
 
 function FurniturePolygon({ item }: { item: Furniture }) {
-  const { calibration } = useAppStore();
+  const { calibration, highlightedElementId, setHighlightedElement } = useAppStore();
   const [hovered, setHovered] = useState(false);
+  const isSelected = highlightedElementId === item.id;
 
   if (item.polygon.length < 3) return null;
 
@@ -42,14 +43,15 @@ function FurniturePolygon({ item }: { item: Furniture }) {
     <Group
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
+      onClick={() => setHighlightedElement(item.id)}
     >
       {/* Polygon fill */}
       <Line
         points={[...flatPts, item.polygon[0].x, item.polygon[0].y]}
         fill={hovered ? item.color.replace('0.35', '0.5') : item.color}
-        stroke={strokeColor}
-        strokeWidth={1.5}
-        dash={[5, 3]}
+        stroke={isSelected ? '#ffb74d' : strokeColor}
+        strokeWidth={isSelected ? 2.5 : 1.5}
+        dash={isSelected ? undefined : [5, 3]}
         closed
       />
 
@@ -61,7 +63,7 @@ function FurniturePolygon({ item }: { item: Furniture }) {
         text={item.name}
         fontSize={11}
         fontStyle="bold"
-        fill="#e0e0e0"
+        fill="#666"
         align="center"
         listening={false}
       />

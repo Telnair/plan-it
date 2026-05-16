@@ -81,6 +81,18 @@ export function PlanCanvas({ stageRef }: Props) {
 
       const measurement = store.measurements.find((m) => m.id === id);
       if (measurement) { store.updateMeasurement(id, shift(measurement)); return; }
+
+      const furnitureItem = store.furniture.find((f) => f.id === id);
+      if (furnitureItem) {
+        store.updateFurniture(id, { polygon: furnitureItem.polygon.map((p) => ({ x: p.x + dx, y: p.y + dy })) });
+        return;
+      }
+
+      const area = store.areas.find((a) => a.id === id);
+      if (area) {
+        store.updateArea(id, { polygon: area.polygon.map((p) => ({ x: p.x + dx, y: p.y + dy })) });
+        return;
+      }
     }
 
     window.addEventListener('keydown', onKeyDown);
@@ -122,7 +134,10 @@ export function PlanCanvas({ stageRef }: Props) {
       return;
     }
 
+    const clickedOnElement = e.target !== e.target.getStage();
+
     if (activeToolType === 'area_select') {
+      if (clickedOnElement) return;
       if (pendingAreaPolygon.length >= 3) {
         const first = pendingAreaPolygon[0];
         const dx = pos.x - first.x;
@@ -140,6 +155,7 @@ export function PlanCanvas({ stageRef }: Props) {
     }
 
     if (activeToolType === 'furniture_select') {
+      if (clickedOnElement) return;
       if (pendingFurniturePolygon.length >= 3) {
         const first = pendingFurniturePolygon[0];
         const dx = pos.x - first.x;
@@ -156,6 +172,7 @@ export function PlanCanvas({ stageRef }: Props) {
       return;
     }
 
+    if (clickedOnElement && activeToolType === 'door') return;
     setDrawStart(pos);
     setDrawEnd(pos);
   }
