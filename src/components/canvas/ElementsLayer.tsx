@@ -263,33 +263,33 @@ function DoorShape({
 
 export function ElementsLayer({ onUpdateDoor }: Props) {
   const store = useAppStore();
-  const { highlightedElementId } = store;
+  const { highlightedElementId, viewSettings } = store;
 
   return (
     <Layer>
-      {store.walls
+      {viewSettings.showMovableWalls && store.walls
         .filter((w) => w.tool === 'wall_movable')
         .map((w) => (
           <WallLine key={w.id} el={w} highlighted={highlightedElementId === w.id} />
         ))}
 
-      {store.walls
+      {viewSettings.showFixedWalls && store.walls
         .filter((w) => w.tool === 'wall_fixed')
         .map((w) => (
           <WallLine key={w.id} el={w} highlighted={highlightedElementId === w.id} />
         ))}
 
-      {store.walls
+      {viewSettings.showCanalWalls && store.walls
         .filter((w) => w.tool === 'wall_canal')
         .map((w) => (
           <CanalWallShape key={w.id} el={w} highlighted={highlightedElementId === w.id} />
         ))}
 
-      {store.windows.map((w) => (
+      {viewSettings.showWindows && store.windows.map((w) => (
         <WallLine key={w.id} el={w} highlighted={highlightedElementId === w.id} />
       ))}
 
-      {store.doors.map((d) => (
+      {viewSettings.showDoors && store.doors.map((d) => (
         <DoorShape
           key={d.id}
           door={d}

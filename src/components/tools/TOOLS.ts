@@ -63,6 +63,15 @@ export const AREA_SELECT_TOOL: ToolDef = {
   dash: [4, 4],
 };
 
+export const FURNITURE_TOOL: ToolDef = {
+  type: 'furniture_select',
+  label: 'Furniture',
+  description: 'Click corners to outline a furniture item',
+  strokeWidth: 1,
+  dashEnabled: true,
+  dash: [4, 4],
+};
+
 export const MEASURE_TOOL: ToolDef = {
   type: 'measure',
   label: 'Measure',
@@ -75,6 +84,7 @@ export const MEASURE_TOOL: ToolDef = {
 
 export function getToolDef(type: ToolType): ToolDef {
   if (type === 'area_select') return AREA_SELECT_TOOL;
+  if (type === 'furniture_select') return FURNITURE_TOOL;
   if (type === 'measure') return MEASURE_TOOL;
   return TOOL_DEFS.find((t) => t.type === type) ?? TOOL_DEFS[0];
 }

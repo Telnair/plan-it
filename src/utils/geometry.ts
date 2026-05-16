@@ -66,3 +66,10 @@ export function pointInPolygon(pt: Point, polygon: Point[]): boolean {
 export function midpoint(a: Point, b: Point): Point {
   return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
 }
+
+/** Axis-aligned bounding box of a polygon */
+export function polygonBoundingBox(pts: Point[]): { minX: number; maxX: number; minY: number; maxY: number } {
+  const xs = pts.map((p) => p.x);
+  const ys = pts.map((p) => p.y);
+  return { minX: Math.min(...xs), maxX: Math.max(...xs), minY: Math.min(...ys), maxY: Math.max(...ys) };
+}

@@ -50,11 +50,6 @@ const LabelText = styled(Typography)`
   color: #c0c0c0 !important;
 `;
 
-const TimeText = styled(Typography)`
-  font-size: 0.68rem !important;
-  color: #555 !important;
-  flex-shrink: 0;
-`;
 
 const TOOL_ICON_PROPS: Record<string, { width: number; dashed: boolean; color: string }> = {
   wall_fixed:   { width: 5, dashed: false, color: '#1a1a1a' },
@@ -62,18 +57,13 @@ const TOOL_ICON_PROPS: Record<string, { width: number; dashed: boolean; color: s
   wall_canal:   { width: 5, dashed: false, color: '#1a1a1a' },
   window:       { width: 2, dashed: true,  color: '#9e9e9e' },
   door:         { width: 2, dashed: false, color: '#3d3d3d' },
-  area_select:  { width: 2, dashed: true,  color: '#4fc3f7' },
+  area_select:      { width: 2, dashed: true,  color: '#4fc3f7' },
+  furniture_select: { width: 2, dashed: true,  color: '#ffb74d' },
+  measure:          { width: 1, dashed: true,  color: '#4fc3f7' },
 };
 
-function relativeTime(ts: number): string {
-  const diff = Math.floor((Date.now() - ts) / 1000);
-  if (diff < 10) return 'just now';
-  if (diff < 60) return `${diff}s ago`;
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-  return `${Math.floor(diff / 3600)}h ago`;
-}
 
-function HistoryRow({ entry }: { entry: HistoryAction }) {
+function ElementRow({ entry }: { entry: HistoryAction }) {
   const { highlightedElementId, setHighlightedElement, removeHistoryEntry } = useAppStore();
   const isHighlighted = highlightedElementId === entry.elementId;
   const iconProps = TOOL_ICON_PROPS[entry.toolType] ?? TOOL_ICON_PROPS.wall_fixed;
@@ -83,8 +73,6 @@ function HistoryRow({ entry }: { entry: HistoryAction }) {
       <LineIcon $width={iconProps.width} $dashed={iconProps.dashed} $color={iconProps.color} />
 
       <LabelText variant="body2">{entry.label}</LabelText>
-
-      <TimeText variant="caption">{relativeTime(entry.timestamp)}</TimeText>
 
       <Tooltip title={isHighlighted ? 'Stop highlighting' : 'Highlight on canvas'}>
         <IconButton
@@ -113,31 +101,47 @@ function HistoryRow({ entry }: { entry: HistoryAction }) {
   );
 }
 
-export function HistoryPanel() {
+export function ElementsPanel() {
   const history = useAppStore((s) => s.history);
+  const walls = useAppStore((s) => s.walls);
+  const windows = useAppStore((s) => s.windows);
+  const doors = useAppStore((s) => s.doors);
+  const areas = useAppStore((s) => s.areas);
+  const measurements = useAppStore((s) => s.measurements);
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to newest (bottom) when an entry is added
+  // Derive the list from history entries that still have a matching canvas element.
+  // This guarantees the list is always in sync with what's actually on the canvas.
+  const furniture = useAppStore((s) => s.furniture);
+
+  const elements = history.filter((entry) => {
+    if (entry.elementType === 'wall')        return walls.some((w) => w.id === entry.elementId);
+    if (entry.elementType === 'window')      return windows.some((w) => w.id === entry.elementId);
+    if (entry.elementType === 'door')        return doors.some((d) => d.id === entry.elementId);
+    if (entry.elementType === 'area')        return areas.some((a) => a.id === entry.elementId);
+    if (entry.elementType === 'furniture')   return furniture.some((f) => f.id === entry.elementId);
+    if (entry.elementType === 'measurement') return measurements.some((m) => m.id === entry.elementId);
+    return false;
+  });
+
+  // Auto-scroll to newest (bottom) when an element is added
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [history.length]);
+  }, [elements.length]);
 
-  if (history.length === 0) {
+  if (elements.length === 0) {
     return (
       <Typography variant="caption" sx={{ color: '#3d3d3d', px: 0.5 }}>
-        No actions yet
+        No elements yet
       </Typography>
     );
   }
 
-  // Show newest at top
-  const reversed = [...history].reverse();
-
   return (
     <Box>
       <ListWrapper>
-        {reversed.map((entry) => (
-          <HistoryRow key={entry.id} entry={entry} />
+        {elements.map((entry) => (
+          <ElementRow key={entry.id} entry={entry} />
         ))}
         <div ref={bottomRef} />
       </ListWrapper>

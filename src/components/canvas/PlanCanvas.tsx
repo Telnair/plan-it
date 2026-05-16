@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Stage, Layer, Rect, Text } from 'react-konva';
+import { Stage, Layer, Rect, Text, Line } from 'react-konva';
 import type Konva from 'konva';
 import { useAppStore } from '../../store/appStore';
 import { BackgroundLayer } from './BackgroundLayer';
@@ -7,8 +7,10 @@ import { ElementsLayer } from './ElementsLayer';
 import { AreaLayer } from './AreaLayer';
 import { DrawingLayer } from './DrawingLayer';
 import { MeasurementLayer } from './MeasurementLayer';
+import { FurnitureLayer } from './FurnitureLayer';
 import { CalibrationDialog } from '../dialogs/CalibrationDialog';
 import { AreaNameDialog } from '../dialogs/AreaNameDialog';
+import { FurnitureNameDialog } from '../dialogs/FurnitureNameDialog';
 import { snapTo45 } from '../../utils/geometry';
 import type { Point, GrayShade, ToolType, LineElement } from '../../store/types';
 import styled from 'styled-components';
@@ -46,11 +48,12 @@ export function PlanCanvas({ stageRef }: Props) {
   const [cursorPos, setCursorPos] = useState<Point | null>(null);
   const [calibOpen, setCalibOpen] = useState(false);
   const [areaDialogOpen, setAreaDialogOpen] = useState(false);
+  const [furnitureDialogOpen, setFurnitureDialogOpen] = useState(false);
 
   const store = useAppStore();
-  const { activeToolType, activeColor, calibration, mode, pendingAreaPolygon, isSettingAnchor } = store;
+  const { activeToolType, activeColor, calibration, mode, pendingAreaPolygon, pendingFurniturePolygon, isSettingAnchor } = store;
 
-  const hideNativeCursor = activeToolType !== 'area_select' && activeToolType !== 'measure';
+  const hideNativeCursor = activeToolType !== 'area_select' && activeToolType !== 'furniture_select' && activeToolType !== 'measure';
 
   // Arrow key movement for the selected element
   useEffect(() => {
@@ -74,7 +77,10 @@ export function PlanCanvas({ stageRef }: Props) {
       if (win) { store.updateWindow(id, shift(win)); return; }
 
       const door = store.doors.find((d) => d.id === id);
-      if (door) { store.updateDoor(id, shift(door)); }
+      if (door) { store.updateDoor(id, shift(door)); return; }
+
+      const measurement = store.measurements.find((m) => m.id === id);
+      if (measurement) { store.updateMeasurement(id, shift(measurement)); return; }
     }
 
     window.addEventListener('keydown', onKeyDown);
@@ -117,7 +123,6 @@ export function PlanCanvas({ stageRef }: Props) {
     }
 
     if (activeToolType === 'area_select') {
-      // Check if clicking near the first point to close the polygon
       if (pendingAreaPolygon.length >= 3) {
         const first = pendingAreaPolygon[0];
         const dx = pos.x - first.x;
@@ -130,6 +135,23 @@ export function PlanCanvas({ stageRef }: Props) {
         }
       }
       store.setPendingAreaPolygon([...pendingAreaPolygon, pos]);
+      setDrawStart(pos);
+      return;
+    }
+
+    if (activeToolType === 'furniture_select') {
+      if (pendingFurniturePolygon.length >= 3) {
+        const first = pendingFurniturePolygon[0];
+        const dx = pos.x - first.x;
+        const dy = pos.y - first.y;
+        if (Math.sqrt(dx * dx + dy * dy) < 15) {
+          setFurnitureDialogOpen(true);
+          setDrawStart(null);
+          setDrawEnd(null);
+          return;
+        }
+      }
+      store.setPendingFurniturePolygon([...pendingFurniturePolygon, pos]);
       setDrawStart(pos);
       return;
     }
@@ -153,7 +175,7 @@ export function PlanCanvas({ stageRef }: Props) {
   }
 
   function handleMouseUp(_e: Konva.KonvaEventObject<MouseEvent>) {
-    if (activeToolType === 'area_select') return;
+    if (activeToolType === 'area_select' || activeToolType === 'furniture_select') return;
     if (!drawStart || !drawEnd) return;
 
     const dx = drawEnd.x - drawStart.x;
@@ -206,6 +228,11 @@ export function PlanCanvas({ stageRef }: Props) {
       if (pendingAreaPolygon.length < 3) return `${pendingAreaPolygon.length} point(s) — need at least 3`;
       return 'Click near the first point to close the area';
     }
+    if (activeToolType === 'furniture_select') {
+      if (pendingFurniturePolygon.length === 0) return 'Click to outline furniture. Click near first point to close.';
+      if (pendingFurniturePolygon.length < 3) return `${pendingFurniturePolygon.length} point(s) — need at least 3`;
+      return 'Click near the first point to close the shape';
+    }
     if (!calibration && store.walls.length === 0) return 'Draw your first line — you\'ll be asked to calibrate the scale';
     return 'Hold Shift to snap to 45° angles';
   })();
@@ -226,7 +253,7 @@ export function PlanCanvas({ stageRef }: Props) {
         onClick={handleClick}
         style={{ background: '#f5f5f5' }}
       >
-        {/* Dot grid — visual reference only, no snapping */}
+        {/* Dot grid — always-visible subtle reference */}
         <Layer listening={false}>
           {Array.from({ length: Math.ceil(size.w / 40) + 1 }, (_, ix) =>
             Array.from({ length: Math.ceil(size.h / 40) + 1 }, (_, iy) => (
@@ -242,8 +269,34 @@ export function PlanCanvas({ stageRef }: Props) {
           )}
         </Layer>
 
+        {/* Toggleable square grid */}
+        {store.viewSettings.showGrid && (() => {
+          const gs = Math.max(4, store.viewSettings.gridSize);
+          const strokeColor = `rgba(0,0,0,${store.viewSettings.gridOpacity / 100})`;
+          return (
+            <Layer listening={false}>
+              {Array.from({ length: Math.ceil(size.w / gs) + 1 }, (_, ix) => (
+                <Line
+                  key={`vg-${ix}`}
+                  points={[ix * gs, 0, ix * gs, size.h]}
+                  stroke={strokeColor}
+                  strokeWidth={1}
+                />
+              ))}
+              {Array.from({ length: Math.ceil(size.h / gs) + 1 }, (_, iy) => (
+                <Line
+                  key={`hg-${iy}`}
+                  points={[0, iy * gs, size.w, iy * gs]}
+                  stroke={strokeColor}
+                  strokeWidth={1}
+                />
+              ))}
+            </Layer>
+          );
+        })()}
+
         <BackgroundLayer
-          src={store.backgroundImage}
+          src={store.viewSettings.showBackgroundImage ? store.backgroundImage : null}
           canvasWidth={size.w}
           canvasHeight={size.h}
           opacity={store.viewSettings.backgroundImageOpacity}
@@ -260,8 +313,11 @@ export function PlanCanvas({ stageRef }: Props) {
           drawStart={drawStart}
           drawEnd={drawEnd}
           areaPolygon={pendingAreaPolygon}
+          furniturePolygon={pendingFurniturePolygon}
           cursorPos={cursorPos}
         />
+
+        <FurnitureLayer />
 
         <MeasurementLayer />
 
@@ -297,9 +353,13 @@ export function PlanCanvas({ stageRef }: Props) {
       <AreaNameDialog
         open={areaDialogOpen}
         polygon={pendingAreaPolygon}
-        onClose={() => {
-          setAreaDialogOpen(false);
-        }}
+        onClose={() => setAreaDialogOpen(false)}
+      />
+
+      <FurnitureNameDialog
+        open={furnitureDialogOpen}
+        polygon={pendingFurniturePolygon}
+        onClose={() => setFurnitureDialogOpen(false)}
       />
     </CanvasContainer>
   );

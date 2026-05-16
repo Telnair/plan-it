@@ -9,14 +9,16 @@ interface Props {
   drawStart: Point | null;
   drawEnd: Point | null;
   areaPolygon: Point[];
+  furniturePolygon: Point[];
   cursorPos: Point | null;
 }
 
-export function DrawingLayer({ drawStart, drawEnd, areaPolygon, cursorPos }: Props) {
+export function DrawingLayer({ drawStart, drawEnd, areaPolygon, furniturePolygon, cursorPos }: Props) {
   const { activeToolType, activeColor, calibration, tourAnchor } = useAppStore();
   const def = getToolDef(activeToolType);
 
-  const showSquareCursor = cursorPos && activeToolType !== 'area_select' && activeToolType !== 'measure';
+  const isPolygonTool = activeToolType === 'area_select' || activeToolType === 'furniture_select';
+  const showSquareCursor = cursorPos && !isPolygonTool && activeToolType !== 'measure';
   const cursorSize = def.strokeWidth;
   const cursorColor = activeToolType === 'measure' ? '#4fc3f7' : activeColor;
 
@@ -51,8 +53,34 @@ export function DrawingLayer({ drawStart, drawEnd, areaPolygon, cursorPos }: Pro
         <Circle key={`ap-${i}`} x={pt.x} y={pt.y} radius={4} fill="#4fc3f7" />
       ))}
 
+      {/* Active in-progress furniture polygon */}
+      {furniturePolygon.length > 0 &&
+        furniturePolygon.map((pt, i) => {
+          const next = furniturePolygon[i + 1];
+          return next ? (
+            <Line
+              key={`fp-seg-${i}`}
+              points={[pt.x, pt.y, next.x, next.y]}
+              stroke="#ffb74d"
+              strokeWidth={1.5}
+              dash={[5, 3]}
+            />
+          ) : null;
+        })}
+      {furniturePolygon.length > 0 && drawEnd && (
+        <Line
+          points={[furniturePolygon[furniturePolygon.length - 1].x, furniturePolygon[furniturePolygon.length - 1].y, drawEnd.x, drawEnd.y]}
+          stroke="#ffb74d"
+          strokeWidth={1.5}
+          dash={[5, 3]}
+        />
+      )}
+      {furniturePolygon.map((pt, i) => (
+        <Circle key={`fp-${i}`} x={pt.x} y={pt.y} radius={4} fill="#ffb74d" />
+      ))}
+
       {/* Line being drawn */}
-      {showLine && activeToolType !== 'area_select' && (
+      {showLine && !isPolygonTool && (
         <Line
           points={[drawStart.x, drawStart.y, drawEnd.x, drawEnd.y]}
           stroke={activeToolType === 'measure' ? '#4fc3f7' : activeColor}
@@ -65,7 +93,7 @@ export function DrawingLayer({ drawStart, drawEnd, areaPolygon, cursorPos }: Pro
       )}
 
       {/* Measurement label */}
-      {showMeasurement && activeToolType !== 'area_select' && (
+      {showMeasurement && !isPolygonTool && (
         <MeasurementHUD
           start={drawStart!}
           end={drawEnd!}
@@ -74,12 +102,12 @@ export function DrawingLayer({ drawStart, drawEnd, areaPolygon, cursorPos }: Pro
       )}
 
       {/* Start anchor dot */}
-      {drawStart && activeToolType !== 'area_select' && (
+      {drawStart && !isPolygonTool && (
         <Circle x={drawStart.x} y={drawStart.y} radius={4} fill={activeColor} />
       )}
 
       {/* Cursor length (without calibration) hint */}
-      {showLine && !calibration && activeToolType !== 'area_select' && (
+      {showLine && !calibration && !isPolygonTool && (
         <>
           <Text
             x={drawEnd!.x + 10}

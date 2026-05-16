@@ -33,6 +33,8 @@ export function ExportDialog({ open, onClose, stageRef }: Props) {
       windows: store.windows,
       doors: store.doors,
       areas: store.areas,
+      measurements: store.measurements,
+      furniture: store.furniture,
       calibration: store.calibration,
       viewSettings: store.viewSettings,
     };
@@ -45,9 +47,13 @@ export function ExportDialog({ open, onClose, stageRef }: Props) {
     URL.revokeObjectURL(url);
   }
 
-  function exportPNG() {
+  async function exportPNG() {
     if (!stageRef.current) return;
+    store.setExportingPNG(true);
+    // Wait two animation frames so React re-renders the measurement labels before capture
+    await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
     const dataURL = stageRef.current.toDataURL({ pixelRatio: 2 });
+    store.setExportingPNG(false);
     const a = document.createElement('a');
     a.href = dataURL;
     a.download = `planit-snapshot-${Date.now()}.png`;

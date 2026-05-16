@@ -79,24 +79,25 @@ export function AppShell({ children, onExport }: Props) {
                 3D Tour
               </Button>
             </Tooltip>
+
+            {mode === 'draw' && (
+              <Tooltip title={isSettingAnchor ? 'Click on the canvas to place the entrance' : tourAnchor ? 'Move 3D entrance point (currently set)' : 'Set 3D tour starting point (entrance)'}>
+                <Button
+                  size="small"
+                  variant={isSettingAnchor ? 'contained' : 'outlined'}
+                  startIcon={<MyLocationIcon />}
+                  onClick={() => setIsSettingAnchor(!isSettingAnchor)}
+                  color={isSettingAnchor ? 'warning' : tourAnchor ? 'success' : 'inherit'}
+                  sx={{
+                    borderColor: isSettingAnchor ? undefined : tourAnchor ? 'rgba(102,187,106,0.5)' : 'rgba(255,255,255,0.2)',
+                  }}
+                >
+                  {isSettingAnchor ? 'Click canvas…' : 'Set Entrance'}
+                </Button>
+              </Tooltip>
+            )}
           </Box>
 
-          {mode === 'draw' && (
-            <Tooltip title={isSettingAnchor ? 'Click on the canvas to place the entrance' : tourAnchor ? 'Move 3D entrance point (currently set)' : 'Set 3D tour starting point (entrance)'}>
-              <Button
-                size="small"
-                variant={isSettingAnchor ? 'contained' : 'outlined'}
-                startIcon={<MyLocationIcon />}
-                onClick={() => setIsSettingAnchor(!isSettingAnchor)}
-                color={isSettingAnchor ? 'warning' : tourAnchor ? 'success' : 'inherit'}
-                sx={{
-                  borderColor: isSettingAnchor ? undefined : tourAnchor ? 'rgba(102,187,106,0.5)' : 'rgba(255,255,255,0.2)',
-                }}
-              >
-                {isSettingAnchor ? 'Click canvas…' : 'Set Entrance'}
-              </Button>
-            </Tooltip>
-          )}
 
           <Tooltip title="Undo last action (⌘Z / Ctrl+Z)">
             <span>
