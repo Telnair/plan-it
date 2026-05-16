@@ -68,7 +68,7 @@ export function PlanCanvas({ stageRef }: Props) {
       const dx = e.key === 'ArrowLeft' ? -step : e.key === 'ArrowRight' ? step : 0;
       const dy = e.key === 'ArrowUp' ? -step : e.key === 'ArrowDown' ? step : 0;
       const id = store.highlightedElementId;
-      const shift = (el: LineElement) => ({ x1: el.x1 + dx, y1: el.y1 + dy, x2: el.x2 + dx, y2: el.y2 + dy });
+      const shift = (el: { x1: number; y1: number; x2: number; y2: number }) => ({ x1: el.x1 + dx, y1: el.y1 + dy, x2: el.x2 + dx, y2: el.y2 + dy });
 
       const wall = store.walls.find((w) => w.id === id);
       if (wall) { store.updateWall(id, shift(wall)); return; }
