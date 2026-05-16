@@ -137,7 +137,7 @@ export function PlanCanvas({ stageRef }: Props) {
     const clickedOnElement = e.target !== e.target.getStage();
 
     if (activeToolType === 'area_select') {
-      if (clickedOnElement) return;
+      if (clickedOnElement && pendingAreaPolygon.length === 0) return;
       if (pendingAreaPolygon.length >= 3) {
         const first = pendingAreaPolygon[0];
         const dx = pos.x - first.x;
@@ -155,7 +155,7 @@ export function PlanCanvas({ stageRef }: Props) {
     }
 
     if (activeToolType === 'furniture_select') {
-      if (clickedOnElement) return;
+      if (clickedOnElement && pendingFurniturePolygon.length === 0) return;
       if (pendingFurniturePolygon.length >= 3) {
         const first = pendingFurniturePolygon[0];
         const dx = pos.x - first.x;
