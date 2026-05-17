@@ -153,10 +153,6 @@ function DoorShape({
   const baseAngle = (Math.atan2(dy, dx) * 180) / Math.PI;
   const arcAngle = door.openingDirection * door.openingAngleDeg;
 
-  // Position of the draggable arc-end handle
-  const handleX = hx + length * Math.cos(((baseAngle + arcAngle) * Math.PI) / 180);
-  const handleY = hy + length * Math.sin(((baseAngle + arcAngle) * Math.PI) / 180);
-
   // Midpoint of the door segment — anchor for the "flip direction" button
   const midX = (door.x1 + door.x2) / 2;
   const midY = (door.y1 + door.y2) / 2;
@@ -192,27 +188,6 @@ function DoorShape({
         dash={[4, 3]}
         fill="rgba(79,195,247,0.05)"
       />
-
-      {/* Angle drag handle — always visible so the user can adjust arc without selecting first */}
-      {onUpdateDoor && (
-        <Circle
-          x={handleX}
-          y={handleY}
-          radius={6}
-          fill="#4fc3f7"
-          draggable
-          onClick={(e) => e.cancelBubble = true}
-          onTap={(e) => e.cancelBubble = true}
-          onDragMove={(e) => {
-            e.cancelBubble = true;
-            const px = e.target.x() - hx;
-            const py = e.target.y() - hy;
-            let newAngle = (Math.atan2(py, px) * 180) / Math.PI - baseAngle;
-            newAngle = Math.max(-180, Math.min(180, newAngle));
-            onUpdateDoor(door.id, { openingAngleDeg: Math.abs(newAngle) });
-          }}
-        />
-      )}
 
       {/* Flip direction button — shown when highlighted */}
       {highlighted && onUpdateDoor && (

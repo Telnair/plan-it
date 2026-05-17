@@ -99,6 +99,19 @@ export function PlanCanvas({ stageRef }: Props) {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [store]);
 
+  // Escape key cancels any in-progress drawing
+  useEffect(() => {
+    function onEscape(e: KeyboardEvent) {
+      if (e.key !== 'Escape') return;
+      setDrawStart(null);
+      setDrawEnd(null);
+      if (pendingAreaPolygon.length > 0) store.setPendingAreaPolygon([]);
+      if (pendingFurniturePolygon.length > 0) store.setPendingFurniturePolygon([]);
+    }
+    window.addEventListener('keydown', onEscape);
+    return () => window.removeEventListener('keydown', onEscape);
+  }, [pendingAreaPolygon, pendingFurniturePolygon, store]);
+
   // Resize observer
   useEffect(() => {
     const el = containerRef.current;
